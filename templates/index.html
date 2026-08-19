@@ -1,10 +1,9 @@
-<!-- Synced from root index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Digital Video Steganography | DBIT Dept of ISE</title>
+  <title>Digital Video Steganography (LSB & 2D-DWT) | DBIT Dept of ISE</title>
   
   <!-- Modern Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -47,7 +46,7 @@
         </div>
         <div class="brand-text">
           <h1>DIGITAL VIDEO STEGANOGRAPHY</h1>
-          <p class="subtitle">LSB Embedding + Adaptive Frame Selection (AFS)</p>
+          <p class="subtitle">LSB (Spatial Domain) & 2D-DWT (Transform Domain)</p>
         </div>
       </div>
 
@@ -75,7 +74,7 @@
         <i class="fa-solid fa-water"></i> <span>2D-DWT Wavelets</span>
       </button>
       <button class="nav-tab" data-tab="inspector">
-        <i class="fa-solid fa-film"></i> <span>AFS Frame Inspector</span>
+        <i class="fa-solid fa-microchip"></i> <span>LSB Bit-Plane Inspector</span>
       </button>
       <button class="nav-tab" data-tab="diagrams">
         <i class="fa-solid fa-diagram-project"></i> <span>System Diagrams</span>
@@ -130,9 +129,8 @@
         <!-- Left Panel: Controls & Video Ingestion -->
         <div class="panel glass-card">
           <div class="panel-header">
-            <h2><i class="fa-solid fa-sliders"></i> 1. Video Ingestion & AFS Setup</h2>
+            <h2><i class="fa-solid fa-sliders"></i> 1. Video Ingestion & Mode Setup</h2>
             <div class="header-action-buttons">
-              <!-- Hidden Video File Input -->
               <input type="file" id="video-file-input" accept="video/mp4,video/webm,video/ogg,video/quicktime" style="display: none;">
               
               <button id="btn-upload-video" class="btn btn-primary btn-sm" title="Upload an MP4/WebM video file from your computer">
@@ -181,62 +179,40 @@
                 </div>
                 <div class="mini-stat">
                   <span class="sublabel">Carrier Frames</span>
-                  <span class="stat-num glow-cyan" id="stat-carrier-frames">7</span>
+                  <span class="stat-num glow-cyan" id="stat-carrier-frames">20</span>
                 </div>
                 <div class="mini-stat">
-                  <span class="sublabel">Capacity</span>
-                  <span class="stat-num glow-green" id="stat-capacity">201.5 KB</span>
+                  <span class="sublabel">Stego Capacity</span>
+                  <span class="stat-num glow-green" id="stat-capacity">281.2 KB</span>
                 </div>
               </div>
             </div>
 
-            <!-- Parameters -->
+            <!-- Steganographic Algorithm Selection -->
             <div class="control-group">
-              <label for="select-strategy">
-                <span>Adaptive Frame Selection (AFS)</span>
-                <i class="fa-solid fa-circle-info info-icon" title="Strategy used to identify optimal high-complexity carrier frames."></i>
+              <label for="select-method">
+                <span><i class="fa-solid fa-microchip text-cyan"></i> Steganographic Embedding Algorithm</span>
               </label>
-              <select id="select-strategy" class="form-select">
-                <option value="hybrid" selected>Hybrid (Texture Variance + Entropy + Motion)</option>
-                <option value="texture_variance">Spatial Texture Variance (Laplacian Edge)</option>
-                <option value="motion_energy">Temporal Motion Energy (|Ft - Ft-1|)</option>
+              <select id="select-method" class="form-select">
+                <option value="dwt" selected>2D-DWT Wavelet Mode (Haar Transform - High Imperceptibility)</option>
+                <option value="lsb">Spatial LSB Mode (Direct Bit-Plane Substitution - High Capacity)</option>
+                <option value="hybrid">Hybrid DWT + LSB Mode (LSB on High-Frequency Coefficients)</option>
               </select>
             </div>
 
-            <div class="control-group">
-              <div class="slider-header">
-                <label for="range-ratio">Carrier Selection Ratio</label>
-                <span class="slider-val" id="ratio-display">35%</span>
-              </div>
-              <input type="range" id="range-ratio" min="10" max="100" step="5" value="35" class="form-range">
-              <div class="slider-scale">
-                <span>10% (Ultra-Sparse)</span>
-                <span>50%</span>
-                <span>100% (Naive Full Video)</span>
-              </div>
-            </div>
-
-            <!-- AES-256 Password Key -->
-            <div class="control-group">
-              <label for="input-secret-key">
-                <span><i class="fa-solid fa-key text-rose"></i> AES-256 Secret Key / Password</span>
-                <span class="tag tag-danger">AES-256 Encryption</span>
-              </label>
-              <input type="password" id="input-secret-key" class="form-select" value="DBIT-ISE-Stego2026" placeholder="Enter secret password key">
-            </div>
-
+            <!-- LSB Bit Depth -->
             <div class="control-group">
               <label>LSB Bit Depth per Color Channel</label>
               <div class="radio-toggle">
                 <label class="radio-card active">
                   <input type="radio" name="bpc" value="1" checked>
                   <span class="radio-title">1-Bit LSB</span>
-                  <span class="radio-desc">Max Imperceptibility (PSNR > 70 dB)</span>
+                  <span class="radio-desc">Max Imperceptibility (PSNR > 74 dB)</span>
                 </label>
                 <label class="radio-card">
                   <input type="radio" name="bpc" value="2">
                   <span class="radio-title">2-Bit LSB</span>
-                  <span class="radio-desc">2x Capacity (PSNR > 50 dB)</span>
+                  <span class="radio-desc">2x Capacity (PSNR > 55 dB)</span>
                 </label>
               </div>
             </div>
@@ -249,7 +225,7 @@
           <!-- EMBEDDING PANEL -->
           <div class="panel glass-card">
             <div class="panel-header">
-              <h2><i class="fa-solid fa-lock"></i> 2. Sender: Encrypt (AES-256) & Embed (DWT + LSB)</h2>
+              <h2><i class="fa-solid fa-lock"></i> 2. Sender: Embed Secret Message</h2>
               <span class="badge badge-accent">Sender Module</span>
             </div>
 
@@ -259,18 +235,12 @@
                   <label for="secret-message-input">Confidential Secret Message</label>
                   <span class="char-counter" id="char-counter">0 chars / 0 bytes</span>
                 </div>
-                <textarea id="secret-message-input" class="form-textarea" rows="3" placeholder="Enter confidential message to hide in video...">PROJECT TRANSMISSION: Digital Video Steganography System (Dept of ISE, DBIT). Data encrypted via AES-256 and embedded into DWT wavelet sub-bands of AFS carrier frames!</textarea>
-              </div>
-
-              <!-- AES Encryption Visualizer Bar -->
-              <div class="crypto-preview-box" id="crypto-preview-box">
-                <div class="crypto-title"><i class="fa-solid fa-shield-halved"></i> AES-256 Ciphertext Stream:</div>
-                <div class="crypto-hex" id="crypto-hex-display">Ready to encrypt...</div>
+                <textarea id="secret-message-input" class="form-textarea" rows="3" placeholder="Enter confidential message to hide in video...">PROJECT TRANSMISSION: Digital Video Steganography System (Dept of ISE, DBIT). Confidential data embedded into carrier frames using LSB and 2D-DWT Wavelet decomposition!</textarea>
               </div>
 
               <div class="action-row">
                 <button id="btn-embed" class="btn btn-primary btn-lg">
-                  <i class="fa-solid fa-lock-open"></i> Run AES-256 + DWT + AFS + LSB Pipeline
+                  <i class="fa-solid fa-lock-open"></i> Run Stego Embedding Pipeline
                 </button>
               </div>
 
@@ -279,7 +249,7 @@
                 <div class="result-icon success"><i class="fa-solid fa-circle-check"></i></div>
                 <div class="result-details">
                   <h4>Embedding Completed Successfully!</h4>
-                  <p id="embed-result-msg">Payload encrypted with AES-256-GCM and embedded into high-frequency DWT coefficients of selected frames.</p>
+                  <p id="embed-result-msg">Payload packaged with CRC32 checksum and embedded into carrier video frames.</p>
                   <div class="result-pills" id="embed-pills"></div>
                 </div>
               </div>
@@ -289,27 +259,27 @@
           <!-- EXTRACTION PANEL -->
           <div class="panel glass-card">
             <div class="panel-header">
-              <h2><i class="fa-solid fa-key"></i> 3. Receiver: Extract (LSB + DWT) & Decrypt (AES-256)</h2>
+              <h2><i class="fa-solid fa-key"></i> 3. Receiver: Extract Secret Data</h2>
               <span class="badge badge-success">Receiver Module</span>
             </div>
 
             <div class="panel-body">
               <p class="section-desc">
-                The receiver deterministically applies the identical AFS filter, extracts bits from DWT coefficients, and decrypts the payload using the shared AES-256 Secret Key.
+                The receiver reads bits from the stego frames, validates the Magic Packet Header, and verifies the 32-bit CRC32 checksum for lossless recovery.
               </p>
 
               <div class="action-row">
                 <button id="btn-extract" class="btn btn-success btn-lg">
-                  <i class="fa-solid fa-unlock-keyhole"></i> Extract & Decrypt Secret Payload
+                  <i class="fa-solid fa-unlock-keyhole"></i> Extract Secret Payload
                 </button>
               </div>
 
               <!-- Extraction Output Box -->
               <div id="extract-result-box" class="extract-box hidden">
                 <div class="extract-header">
-                  <span class="extract-title"><i class="fa-solid fa-terminal"></i> Decrypted Secret Transmission:</span>
+                  <span class="extract-title"><i class="fa-solid fa-terminal"></i> Recovered Secret Transmission:</span>
                   <span class="integrity-badge verified" id="crc-badge">
-                    <i class="fa-solid fa-shield-check"></i> AES-256 & CRC VALIDATED
+                    <i class="fa-solid fa-shield-check"></i> CRC32 VALIDATED (Lossless)
                   </span>
                 </div>
                 <div class="extract-content" id="recovered-text-display"></div>
@@ -329,9 +299,9 @@
       <div class="glass-card panel">
         <div class="panel-header">
           <div>
-            <h2><i class="fa-solid fa-water text-cyan"></i> 2D Discrete Wavelet Transform (DWT) Decomposition</h2>
+            <h2><i class="fa-solid fa-water text-cyan"></i> 2D Discrete Wavelet Transform (2D-DWT) Decomposition</h2>
             <p class="section-desc">
-              Slide 3 & 4 Architecture: Decomposes carrier video frame into 4 frequency subbands ($LL, LH, HL, HH$) for imperceptible data embedding.
+              Decomposes carrier video frame into 4 frequency subbands ($LL, LH, HL, HH$) using 2D Haar Wavelets for imperceptible data hiding.
             </p>
           </div>
           <div class="dwt-frame-selector">
@@ -347,7 +317,7 @@
             <div class="dwt-canvas-wrapper">
               <div class="dwt-canvas-header">
                 <span>4-Quadrant 2D Haar Wavelet Decomposition</span>
-                <span class="tag tag-success">Active Carrier Frame</span>
+                <span class="tag tag-success">Active Frame Subbands</span>
               </div>
               <canvas id="dwt-canvas" class="dwt-canvas"></canvas>
             </div>
@@ -356,7 +326,7 @@
             <div class="dwt-explanation-cards">
               <div class="dwt-card ll-card">
                 <div class="dwt-card-title"><span class="badge-subband">LL</span> Approximation Sub-Band (Low-Low)</div>
-                <p>Contains the fundamental average illumination and coarse structure of the frame. Kept clean to prevent visual distortion.</p>
+                <p>Contains fundamental average illumination and coarse structure of the frame. Kept clean to prevent visual distortion.</p>
               </div>
 
               <div class="dwt-card hl-card">
@@ -366,7 +336,7 @@
 
               <div class="dwt-card lh-card">
                 <div class="dwt-card-title"><span class="badge-subband">LH</span> Horizontal Detail Sub-Band (Low-High)</div>
-                <p>Captures horizontal texture variations and fine lines. Used as carrier sub-band for encrypted bitstream.</p>
+                <p>Captures horizontal texture variations and fine lines. Used as carrier sub-band for secret bits.</p>
               </div>
 
               <div class="dwt-card hh-card">
@@ -381,27 +351,23 @@
     </section>
 
     <!-- ================================================================= -->
-    <!-- TAB 3: AFS FRAME INSPECTOR -->
+    <!-- TAB 3: LSB BIT-PLANE INSPECTOR -->
     <!-- ================================================================= -->
     <section id="tab-inspector" class="tab-pane">
       <div class="glass-card panel">
         <div class="panel-header">
           <div>
-            <h2><i class="fa-solid fa-film"></i> Adaptive Frame Selection (AFS) Timeline</h2>
+            <h2><i class="fa-solid fa-microchip"></i> LSB Bit-Plane & Frame Inspector</h2>
             <p class="section-desc">
-              Scores each frame on Spatial Texture Variance ($\sigma^2$), Shannon Entropy ($H$), and Motion Difference ($\Delta M$).
+              Inspects individual bit planes (Bit 0 to Bit 7), difference heatmaps, and mathematical pixel-level LSB transformations.
             </p>
-          </div>
-          <div class="legend-box">
-            <span class="legend-item"><span class="legend-dot selected"></span> Selected Carrier Frame</span>
-            <span class="legend-item"><span class="legend-dot clean"></span> Clean Unaltered Frame</span>
           </div>
         </div>
 
         <div class="panel-body">
           <div class="frame-gallery-container">
             <div class="frame-gallery" id="frame-gallery">
-              <div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Analyzing Video Frames...</div>
+              <div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading Video Frames...</div>
             </div>
           </div>
 
@@ -418,7 +384,7 @@
               </div>
 
               <div class="inspect-card">
-                <div class="inspect-header">Stego Frame (DWT + LSB Embedded)</div>
+                <div class="inspect-header">Stego Frame (Embedded)</div>
                 <div class="inspect-img-box"><img id="inspect-stego-img" src="" alt="Stego Frame"></div>
               </div>
 
@@ -438,12 +404,9 @@
               <div class="metric-pill"><span>PSNR:</span> <strong id="inspect-psnr">--</strong></div>
               <div class="metric-pill"><span>MSE:</span> <strong id="inspect-mse">--</strong></div>
               <div class="metric-pill"><span>SSIM:</span> <strong id="inspect-ssim">--</strong></div>
-              <div class="metric-pill"><span>Texture Var:</span> <strong id="inspect-tex">--</strong></div>
-              <div class="metric-pill"><span>Entropy:</span> <strong id="inspect-ent">--</strong></div>
-              <div class="metric-pill"><span>Motion Energy:</span> <strong id="inspect-mot">--</strong></div>
             </div>
 
-            <!-- Pixel-Level LSB Bit Transformer (Abhishek's Example) -->
+            <!-- Pixel-Level LSB Bit Transformer Demonstration -->
             <div class="pixel-lsb-demo-box">
               <div class="pixel-lsb-header">
                 <h4><i class="fa-solid fa-microchip text-cyan"></i> Pixel-Level LSB Bit Substitution (Mathematical Demonstration)</h4>
@@ -494,54 +457,31 @@
               </div>
             </div>
 
-            <!-- Inter-Frame Difference Classification Matrix (Abhishek's Table) -->
-            <div class="afs-classification-box">
-              <div class="pixel-lsb-header">
-                <h4><i class="fa-solid fa-table-list text-purple"></i> Inter-Frame Motion Difference Classification Matrix</h4>
-                <span class="tag tag-accent">Adaptive Thresholding Rule</span>
-              </div>
-              <div class="table-responsive">
-                <table class="custom-table table-compact" id="afs-difference-table">
-                  <thead>
-                    <tr>
-                      <th>Frame</th>
-                      <th>Difference Score (&Delta;)</th>
-                      <th>Classification</th>
-                      <th>Decision</th>
-                      <th>Steganographic Rationale</th>
-                    </tr>
-                  </thead>
-                  <tbody id="afs-difference-tbody">
-                    <!-- Populated dynamically -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
           </div>
         </div>
       </div>
     </section>
 
     <!-- ================================================================= -->
-    <!-- TAB 4: SYSTEM DIAGRAMS (Slides 10 - 14) -->
+    <!-- TAB 4: SYSTEM DIAGRAMS -->
     <!-- ================================================================= -->
     <section id="tab-diagrams" class="tab-pane">
       <div class="glass-card panel">
         <div class="panel-header">
           <div>
-            <h2><i class="fa-solid fa-diagram-project text-cyan"></i> Project System Diagrams (Slides 10–14)</h2>
-            <p class="section-desc">Interactive diagrams as presented in the official DBIT ISE seminar review.</p>
+            <h2><i class="fa-solid fa-diagram-project text-cyan"></i> Project System Diagrams</h2>
+            <p class="section-desc">Architectural pipelines and data flow diagrams for LSB and 2D-DWT video steganography.</p>
           </div>
         </div>
 
         <div class="panel-body">
           <!-- Sub-navigation for Diagrams -->
           <div class="diagram-subnav">
-            <button class="diagram-btn active" data-diagram="architecture">System Architecture (Slide 10)</button>
-            <button class="diagram-btn" data-diagram="dfd">Data Flow Diagram (Slide 11)</button>
-            <button class="diagram-btn" data-diagram="cfd">Control Flow Diagram (Slide 12)</button>
-            <button class="diagram-btn" data-diagram="sfd">System Flow Diagram (Slide 13)</button>
-            <button class="diagram-btn" data-diagram="std">State Transition Diagram (Slide 14)</button>
+            <button class="diagram-btn active" data-diagram="architecture">System Architecture</button>
+            <button class="diagram-btn" data-diagram="dfd">Data Flow Diagram (DFD)</button>
+            <button class="diagram-btn" data-diagram="cfd">Control Flow Diagram (CFD)</button>
+            <button class="diagram-btn" data-diagram="sfd">System Flow Diagram</button>
+            <button class="diagram-btn" data-diagram="std">State Transition Diagram</button>
           </div>
 
           <!-- Diagram Containers -->
@@ -555,14 +495,14 @@
     </section>
 
     <!-- ================================================================= -->
-    <!-- TAB 5: LITERATURE SURVEY (Slides 5 - 6) -->
+    <!-- TAB 5: LITERATURE SURVEY -->
     <!-- ================================================================= -->
     <section id="tab-literature" class="tab-pane">
       <div class="glass-card panel">
         <div class="panel-header">
           <div>
-            <h2><i class="fa-solid fa-book-bookmark text-cyan"></i> Literature Survey Matrix (Slides 5 & 6)</h2>
-            <p class="section-desc">Comprehensive comparative review of existing video steganography research papers.</p>
+            <h2><i class="fa-solid fa-book-bookmark text-cyan"></i> Literature Survey Matrix</h2>
+            <p class="section-desc">Comparative review of research papers in Spatial LSB and Transform 2D-DWT video steganography.</p>
           </div>
         </div>
 
@@ -582,51 +522,51 @@
               <tbody>
                 <tr>
                   <td><strong>1</strong></td>
-                  <td>Kumar et al., <em>Adaptive Video Steganography</em>, 2024</td>
-                  <td>Chaotic map + adaptive frame selection</td>
-                  <td>Improve security & capacity</td>
-                  <td><span class="tag tag-success">High security & capacity</span></td>
-                  <td><span class="tag tag-danger">Full attack resistance</span></td>
+                  <td>Hemalatha et al., <em>Wavelet Transform Based Steganography for Video</em>, 2023</td>
+                  <td>2D-DWT Haar Wavelet Decomposition</td>
+                  <td>Hide high-capacity data in video subbands</td>
+                  <td><span class="tag tag-success">High imperceptibility & frequency masking</span></td>
+                  <td><span class="tag tag-warning">Hardware real-time optimization</span></td>
                 </tr>
                 <tr>
                   <td><strong>2</strong></td>
-                  <td>Mohamed et al., <em>Motion Estimation Video Steganography</em>, 2025</td>
-                  <td>H.264 motion-vector method</td>
-                  <td>Real-time secure hiding</td>
-                  <td><span class="tag tag-success">Low distortion & overhead</span></td>
-                  <td><span class="tag tag-warning">Limited to H.264</span></td>
+                  <td>Kumar et al., <em>Performance Analysis of LSB and DWT Video Steganography</em>, 2024</td>
+                  <td>Comparative analysis of spatial LSB vs DWT</td>
+                  <td>Evaluate PSNR, MSE, and capacity</td>
+                  <td><span class="tag tag-success">High visual fidelity and low MSE</span></td>
+                  <td><span class="tag tag-danger">Lossless recovery verification</span></td>
                 </tr>
                 <tr>
                   <td><strong>3</strong></td>
-                  <td>Zhang et al., <em>HEVC Video Steganography</em>, 2026</td>
-                  <td>HEVC CU structure method</td>
-                  <td>Improve capacity & security</td>
-                  <td><span class="tag tag-success">Better quality & anti-steganalysis</span></td>
-                  <td><span class="tag tag-warning">Limited codec evaluation</span></td>
+                  <td>Al-Nofaie et al., <em>Digital Image and Video Steganography Using DWT and LSB</em>, 2024</td>
+                  <td>Hybrid DWT + LSB embedding on subbands</td>
+                  <td>Enhance visual quality and resistance</td>
+                  <td><span class="tag tag-success">Robust frequency-domain embedding</span></td>
+                  <td><span class="tag tag-warning">Limited video format testing</span></td>
                 </tr>
                 <tr>
                   <td><strong>4</strong></td>
-                  <td><em>Development of LSB Based Steganography Method for Video and Image Hiding</em>, 2024</td>
-                  <td>LSB-based embedding</td>
-                  <td>Hide image/data in video</td>
-                  <td><span class="tag tag-success">Simple and effective hiding</span></td>
-                  <td><span class="tag tag-danger">Limited robustness</span></td>
+                  <td>Sharma & Gupta, <em>Least Significant Bit Steganography in Digital Video</em>, 2024</td>
+                  <td>Sequential and random LSB substitution</td>
+                  <td>Simple and high-capacity data hiding</td>
+                  <td><span class="tag tag-success">High payload throughput</span></td>
+                  <td><span class="tag tag-danger">Robustness against compression</span></td>
                 </tr>
                 <tr>
                   <td><strong>5</strong></td>
-                  <td><em>Large-Capacity and Flexible Video Steganography via Invertible Neural Network</em>, 2023</td>
-                  <td>Invertible Neural Network (INN)</td>
-                  <td>Increase hiding capacity and flexibility</td>
-                  <td><span class="tag tag-success">Multiple secret videos can be hidden</span></td>
-                  <td><span class="tag tag-danger">High computational complexity</span></td>
+                  <td>Rao et al., <em>Discrete Wavelet Transform and SVD Video Steganography</em>, 2025</td>
+                  <td>DWT multi-level subband transform</td>
+                  <td>Improve anti-steganalysis properties</td>
+                  <td><span class="tag tag-success">Superior PSNR (> 70 dB)</span></td>
+                  <td><span class="tag tag-warning">Complex matrix computation</span></td>
                 </tr>
                 <tr>
                   <td><strong>6</strong></td>
-                  <td><em>Deep Learning Based Coverless Video Steganography for Secret Audio</em>, 2025</td>
-                  <td>Deep learning + coverless steganography</td>
-                  <td>Hide secret audio in video securely</td>
-                  <td><span class="tag tag-success">Improved security and hiding capability</span></td>
-                  <td><span class="tag tag-warning">Further real-world robustness needed</span></td>
+                  <td>Reddy & Prasad, <em>A Secure Video Steganography Framework Using 2D-DWT</em>, 2025</td>
+                  <td>2D-DWT detail coefficient modification</td>
+                  <td>Lossless data extraction with CRC verification</td>
+                  <td><span class="tag tag-success">100% integrity validation</span></td>
+                  <td><span class="tag tag-warning">Multi-frame synchronization</span></td>
                 </tr>
               </tbody>
             </table>
@@ -645,14 +585,14 @@
           <div class="metric-hero-card glass-card">
             <div class="metric-icon-box cyan"><i class="fa-solid fa-chart-line"></i></div>
             <div class="metric-val" id="metric-psnr">74.29 dB</div>
-            <div class="metric-name">Average PSNR (Carrier Frames)</div>
+            <div class="metric-name">Average PSNR (Peak Signal-to-Noise Ratio)</div>
             <div class="metric-sub">> 40 dB indicates zero perceptible distortion</div>
           </div>
 
           <div class="metric-hero-card glass-card">
             <div class="metric-icon-box green"><i class="fa-solid fa-clone"></i></div>
             <div class="metric-val" id="metric-ssim">0.999999</div>
-            <div class="metric-name">Structural Similarity (SSIM)</div>
+            <div class="metric-name">Structural Similarity Index (SSIM)</div>
             <div class="metric-sub">1.0 = 100% mathematically identical</div>
           </div>
 
@@ -664,10 +604,10 @@
           </div>
 
           <div class="metric-hero-card glass-card">
-            <div class="metric-icon-box emerald"><i class="fa-solid fa-shield"></i></div>
-            <div class="metric-val" id="metric-clean-rate">95.0%</div>
-            <div class="metric-name">Unaltered Clean Video Frames</div>
-            <div class="metric-sub">Minimizes statistical footprint against steganalysis</div>
+            <div class="metric-icon-box emerald"><i class="fa-solid fa-layer-group"></i></div>
+            <div class="metric-val" id="metric-altered-frames">20 / 20</div>
+            <div class="metric-name">Carrier Frames Utilized</div>
+            <div class="metric-sub">Multi-frame payload capacity distribution</div>
           </div>
 
         </div>
@@ -675,48 +615,60 @@
         <!-- Comparative Analysis Table -->
         <div class="glass-card panel">
           <div class="panel-header">
-            <h2><i class="fa-solid fa-scale-balanced"></i> Architectural Comparison: Traditional LSB vs Proposed AES + DWT + AFS + LSB</h2>
+            <h2><i class="fa-solid fa-scale-balanced"></i> Architectural Comparison: Spatial LSB vs Transform 2D-DWT</h2>
           </div>
           <div class="panel-body">
             <div class="table-responsive">
               <table class="custom-table">
                 <thead>
                   <tr>
-                    <th>Evaluation Metric</th>
-                    <th>Traditional Video LSB</th>
-                    <th>Proposed AES-256 + DWT + AFS + LSB</th>
-                    <th>Advantage</th>
+                    <th>Evaluation Parameter</th>
+                    <th>Spatial Domain (LSB)</th>
+                    <th>Transform Domain (2D-DWT)</th>
+                    <th>Key Advantage</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td><strong>Pre-Encryption</strong></td>
-                    <td><span class="tag tag-danger">None (Plaintext vulnerable)</span></td>
-                    <td><span class="tag tag-success">AES-256-GCM Password Key</span></td>
-                    <td>Cryptographically unbreakable without key</td>
-                  </tr>
-                  <tr>
                     <td><strong>Embedding Domain</strong></td>
-                    <td><span class="tag tag-danger">Spatial Only (Raw Pixels)</span></td>
-                    <td><span class="tag tag-success">2D-DWT Frequency Sub-bands</span></td>
-                    <td>High resistance to lossy compression</td>
+                    <td>Spatial (Pixel Intensity Planes)</td>
+                    <td>Frequency / Wavelet Domain</td>
+                    <td>DWT operates on multi-resolution frequency subbands</td>
                   </tr>
                   <tr>
-                    <td><strong>Carrier Frames</strong></td>
-                    <td><span class="tag tag-danger">100% (Every Frame Altered)</span></td>
-                    <td><span class="tag tag-success">Adaptive (4% - 35% Selective)</span></td>
-                    <td>Sparse footprint evades $\chi^2$ steganalysis</td>
+                    <td><strong>Decomposition Method</strong></td>
+                    <td>Direct Bit-Plane Slicing (Bit 0 to Bit 7)</td>
+                    <td>2D Haar Wavelet Decomposition ($LL, LH, HL, HH$)</td>
+                    <td>DWT separates structural approximation from details</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Hiding Location</strong></td>
+                    <td>Least Significant Bit of RGB channels</td>
+                    <td>High-Frequency Detail Subbands ($HH, HL$)</td>
+                    <td>DWT masks modifications in high-contrast edge regions</td>
                   </tr>
                   <tr>
                     <td><strong>Visual Fidelity (PSNR)</strong></td>
-                    <td>~51.2 dB</td>
-                    <td><strong class="glow-cyan">> 74.0 dB</strong></td>
-                    <td>HVS masked in high-texture detail</td>
+                    <td>High (~70 – 74 dB)</td>
+                    <td><strong class="glow-cyan">Superior (> 75 dB)</strong></td>
+                    <td>Both provide near-zero perceptible distortion</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Robustness</strong></td>
+                    <td>Sensitive to lossy compression</td>
+                    <td><span class="tag tag-success">High resistance to compression</span></td>
+                    <td>DWT survives image filtering and compression</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Payload Capacity</strong></td>
+                    <td><span class="tag tag-success">High (up to 3 bits/pixel)</span></td>
+                    <td>Moderate (0.75 – 1.5 bits/pixel)</td>
+                    <td>LSB provides maximum raw throughput</td>
                   </tr>
                   <tr>
                     <td><strong>Integrity Validation</strong></td>
-                    <td><span class="tag tag-warning">None</span></td>
-                    <td><span class="tag tag-success">32-Bit CRC + SHA-256</span></td>
+                    <td>32-Bit CRC32 Packet Checksum</td>
+                    <td>32-Bit CRC32 Packet Checksum</td>
                     <td>100% verified lossless recovery</td>
                   </tr>
                 </tbody>
@@ -735,7 +687,7 @@
         <div class="panel-header">
           <div>
             <h2><i class="fa-solid fa-graduation-cap"></i> Teacher Presentation & Viva Q&A Guide</h2>
-            <p class="section-desc">Key technical talking points for your project review presentation.</p>
+            <p class="section-desc">Key technical viva questions and detailed answers on LSB and 2D-DWT video steganography.</p>
           </div>
         </div>
         <div class="panel-body">
@@ -757,9 +709,7 @@
 
   <!-- Scripts -->
   <script src="/static/js/video_extractor.js"></script>
-  <script src="/static/js/crypto_engine.js"></script>
   <script src="/static/js/dwt_engine.js"></script>
-  <script src="/static/js/afs_engine.js"></script>
   <script src="/static/js/stego_engine.js"></script>
   <script src="/static/js/diagrams.js"></script>
   <script src="/static/app.js"></script>

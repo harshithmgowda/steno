@@ -1,5 +1,5 @@
 """
-Video Steganography using LSB and Adaptive Frame Selection (AFS)
+Video Steganography using LSB and 2D-DWT
 Module Package Initialization
 """
 

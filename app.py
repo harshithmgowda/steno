@@ -1,6 +1,6 @@
 """
 ================================================================================
-Flask Web Application for Video Steganography (LSB + AFS)
+Flask Web Application for Video Steganography (LSB & 2D-DWT)
 Backend API and Web Server
 ================================================================================
 """
@@ -279,7 +279,7 @@ def project_info():
 
         return jsonify({
             "status": "success",
-            "title": "Digital Video Steganography: LSB + Adaptive Frame Selection (AFS)",
+            "title": "Digital Video Steganography: LSB (Spatial Domain) & 2D-DWT (Transform Domain)",
             "synopsis_md": synopsis_content,
             "qa_md": qa_content,
         })
@@ -289,7 +289,7 @@ def project_info():
 
 if __name__ == "__main__":
     print("================================================================================")
-    print(" >>> VIDEO STEGANOGRAPHY (LSB + AFS) WEB SERVER STARTING")
+    print(" >>> VIDEO STEGANOGRAPHY (LSB & 2D-DWT) WEB SERVER STARTING")
     print(" >>> Open your browser at: http://127.0.0.1:5000")
     print("================================================================================")
     app.run(host="127.0.0.1", port=5000, debug=True)
