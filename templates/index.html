@@ -59,10 +59,10 @@
     <!-- Navigation Tabs -->
     <nav class="nav-tabs">
       <button class="nav-tab active" data-tab="studio">
-        <i class="fa-solid fa-lock"></i> <span>Embed Secret (LSB + AFS)</span>
+        <i class="fa-solid fa-lock"></i> <span>Embed Secret Video (LSB + AFS)</span>
       </button>
       <button class="nav-tab" data-tab="extractor">
-        <i class="fa-solid fa-unlock-keyhole"></i> <span>Extract & Decode Message</span>
+        <i class="fa-solid fa-unlock-keyhole"></i> <span>Extract & Decode Video</span>
       </button>
       <button class="nav-tab" data-tab="inspector">
         <i class="fa-solid fa-wave-square"></i> <span>Adaptive Frame & Bit-Plane Inspector</span>
@@ -83,34 +83,29 @@
       
       <div class="studio-grid">
         
-        <!-- Left Panel: Carrier Media Source & Config -->
+        <!-- Left Panel: Carrier Video Source & Config -->
         <div class="panel glass-card">
           <div class="panel-header">
-            <h2><i class="fa-solid fa-photo-film text-cyan"></i> 1. Carrier Media Setup (Video / Image)</h2>
+            <h2><i class="fa-solid fa-video text-cyan"></i> 1. Carrier Video Stream Setup</h2>
             <div class="header-action-buttons">
-              <input type="file" id="video-file-input" accept="video/mp4,video/webm,video/ogg,video/quicktime,.stego,.json" style="display: none;">
-              <input type="file" id="image-file-input" accept="image/png,image/jpeg,image/webp,image/bmp" style="display: none;">
+              <input type="file" id="video-file-input" accept="video/mp4,video/webm,video/ogg,video/quicktime,video/avi,.stego,.json" style="display: none;">
               
-              <button id="btn-upload-video" class="btn btn-primary btn-sm" title="Upload an MP4/WebM video file">
-                <i class="fa-solid fa-video"></i> Video
-              </button>
-
-              <button id="btn-upload-image" class="btn btn-secondary btn-sm" title="Upload a PNG/JPEG/WebP image carrier">
-                <i class="fa-solid fa-image"></i> Image
+              <button id="btn-upload-video" class="btn btn-primary btn-sm" title="Upload an MP4/WebM video file from your device">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload Video
               </button>
               
-              <button id="btn-load-sample" class="btn btn-secondary btn-sm" title="Generate synthetic dynamic carrier">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> AI Sample
+              <button id="btn-load-sample" class="btn btn-secondary btn-sm" title="Generate synthetic dynamic video carrier">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> AI Sample Video
               </button>
             </div>
           </div>
 
           <div class="panel-body">
             
-            <!-- Media Extraction Progress Indicator -->
+            <!-- Video Extraction Progress Indicator -->
             <div id="video-upload-progress" class="upload-progress-box hidden">
               <div class="progress-info">
-                <span id="upload-progress-text"><i class="fa-solid fa-spinner fa-spin"></i> Decoding carrier media frames...</span>
+                <span id="upload-progress-text"><i class="fa-solid fa-spinner fa-spin"></i> Decoding carrier video frames...</span>
                 <span id="upload-progress-pct" class="glow-cyan">0%</span>
               </div>
               <div class="progress-bar-bg">
@@ -124,21 +119,15 @@
               <div class="video-filename-tag"><i class="fa-solid fa-file-video"></i> <span id="uploaded-video-name">carrier_video.mp4</span></div>
             </div>
 
-            <!-- Custom Image Preview -->
-            <div id="image-preview-wrapper" class="video-preview-wrapper hidden">
-              <img id="image-player-preview" src="" alt="Carrier Image Preview" style="max-width: 100%; max-height: 160px; border-radius: 6px; display: block; margin: 0 auto;">
-              <div class="video-filename-tag"><i class="fa-solid fa-file-image"></i> <span id="uploaded-image-name">carrier_image.png</span></div>
-            </div>
-
-            <!-- Carrier Media Stats Card -->
+            <!-- Video Stats Card -->
             <div class="video-info-box">
               <div class="info-row">
-                <span class="label"><i class="fa-solid fa-film"></i> Carrier Media:</span>
+                <span class="label"><i class="fa-solid fa-film"></i> Carrier Stream:</span>
                 <span class="value highlight" id="stat-video-status">20 Frames Loaded</span>
               </div>
               <div class="info-grid">
                 <div class="mini-stat">
-                  <span class="sublabel">Carrier Frames</span>
+                  <span class="sublabel">Total Frames</span>
                   <span class="stat-num" id="stat-total-frames">20</span>
                 </div>
                 <div class="mini-stat">
@@ -146,7 +135,7 @@
                   <span class="stat-num" id="stat-resolution">320x240</span>
                 </div>
                 <div class="mini-stat">
-                  <span class="sublabel">Carrier Type</span>
+                  <span class="sublabel">Carrier Format</span>
                   <span class="stat-num glow-cyan" id="stat-carrier-frames">Video</span>
                 </div>
                 <div class="mini-stat">
@@ -221,22 +210,15 @@
                 </div>
               </div>
 
-              <!-- Stego Media Download Options -->
+              <!-- Stego Video Download Options -->
               <div id="stego-download-section" class="stego-download-section hidden">
                 <div class="download-section-header">
-                  <span class="download-title"><i class="fa-solid fa-cloud-arrow-down glow-cyan"></i> Export & Download Stego Media</span>
+                  <span class="download-title"><i class="fa-solid fa-cloud-arrow-down glow-cyan"></i> Export & Download Stego Video</span>
                   <span class="tag tag-success">Carrier Ready</span>
                 </div>
-                <p class="download-desc">Download the video or image containing your inserted confidential message. You can share this file or upload it in the <strong>Extract & Decode</strong> tab to reveal the secret message!</p>
-                <div class="download-actions-grid">
-                  <button id="btn-download-image" class="btn btn-download-primary" title="Download stego carrier image as a lossless PNG">
-                    <i class="fa-solid fa-image"></i>
-                    <div class="btn-text-block">
-                      <span class="btn-main-label">Download Stego Image (.png)</span>
-                      <span class="btn-sub-label">Lossless image with embedded payload</span>
-                    </div>
-                  </button>
-                  <button id="btn-download-video" class="btn btn-download-secondary" title="Download compiled playable stego video in WebM format">
+                <p class="download-desc">Download the stego video containing your inserted confidential message. You can share this file or upload it in the <strong>Extract & Decode Video</strong> tab to reveal the secret message!</p>
+                <div class="download-actions-grid" style="grid-template-columns: 1.2fr 1fr;">
+                  <button id="btn-download-video" class="btn btn-download-primary" title="Download compiled playable stego video in WebM format">
                     <i class="fa-solid fa-file-video"></i>
                     <div class="btn-text-block">
                       <span class="btn-main-label">Download Stego Video (.webm)</span>
@@ -305,20 +287,19 @@
 
           <div class="panel-body">
             <!-- Drag and Drop Zone -->
-            <input type="file" id="extractor-file-input" accept="video/mp4,video/webm,video/ogg,video/quicktime,video/avi,.stego,.json,image/png,image/jpeg" style="display: none;">
+            <input type="file" id="extractor-file-input" accept="video/mp4,video/webm,video/ogg,video/quicktime,video/avi,.stego,.json" style="display: none;">
             
             <div id="extractor-dropzone" class="stego-dropzone">
               <div class="dropzone-icon">
                 <i class="fa-solid fa-film"></i>
               </div>
               <div class="dropzone-text">
-                <h3>Drag & Drop Stego Video or Archive</h3>
-                <p>or <button type="button" id="btn-browse-extractor-file" class="btn-text-link">browse from your device</button></p>
+                <h3>Drag & Drop Stego Video or Carrier Package</h3>
+                <p>or <button type="button" id="btn-browse-extractor-file" class="btn-text-link">browse video from device</button></p>
               </div>
               <div class="format-badges">
-                <span class="format-badge"><i class="fa-solid fa-file-video"></i> MP4 / WebM</span>
-                <span class="format-badge"><i class="fa-solid fa-box-archive"></i> .stego Bundle</span>
-                <span class="format-badge"><i class="fa-solid fa-file-image"></i> PNG Frames</span>
+                <span class="format-badge"><i class="fa-solid fa-file-video"></i> MP4 / WebM Video</span>
+                <span class="format-badge"><i class="fa-solid fa-box-archive"></i> .stego Package</span>
               </div>
             </div>
 
