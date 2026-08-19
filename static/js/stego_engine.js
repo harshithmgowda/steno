@@ -89,10 +89,33 @@ class AdaptiveFrameSelector {
         textureScore: texture,
         motionEnergy: motion,
         suitabilityScore: suitability,
-        recommended: suitability >= 25.0
+        recommended: suitability >= 20.0
       });
     }
     return scores;
+  }
+
+  /**
+   * Identifies candidate frame indices for embedding.
+   * Modifies only selected suitable frames and skips static flat frames to prevent detection.
+   */
+  static selectCandidateFrames(frames, totalBitsNeeded = 0, bitsPerChannel = 1) {
+    if (!frames || frames.length === 0) return [];
+    if (frames.length === 1) return [0];
+
+    const scores = this.evaluateFrames(frames);
+    const bitsPerFrame = frames[0].width * frames[0].height * 3 * bitsPerChannel;
+
+    const threshold = 20.0;
+    let candidates = scores
+      .filter(s => s.suitabilityScore >= threshold)
+      .map(s => s.index);
+
+    if (candidates.length * bitsPerFrame < totalBitsNeeded || candidates.length === 0) {
+      candidates = scores.map(s => s.index);
+    }
+
+    return candidates;
   }
 }
 
@@ -201,18 +224,15 @@ class StegoPipelineEngine {
     const frames = [];
 
     for (let i = 0; i < numFrames; i++) {
-      // Create rich texture and motion graphics
       ctx.fillStyle = "#0f172a";
       ctx.fillRect(0, 0, width, height);
 
-      // Gradient backdrop
       const grad = ctx.createLinearGradient(0, 0, width, height);
       grad.addColorStop(0, `hsl(${(i * 18) % 360}, 60%, 20%)`);
       grad.addColorStop(1, `hsl(${((i * 18) + 120) % 360}, 70%, 10%)`);
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, width, height);
 
-      // Moving textured particles and geometries
       for (let p = 0; p < 16; p++) {
         const px = (Math.sin(i * 0.15 + p) * 0.5 + 0.5) * width;
         const py = (Math.cos(i * 0.2 + p * 0.8) * 0.5 + 0.5) * height;
@@ -224,7 +244,6 @@ class StegoPipelineEngine {
         ctx.fill();
       }
 
-      // Fine high-frequency grid pattern for texture
       ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
       ctx.lineWidth = 1;
       for (let x = 0; x < width; x += 20) {
@@ -234,7 +253,6 @@ class StegoPipelineEngine {
         ctx.stroke();
       }
 
-      // Timestamp & frame counter
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 13px Google Sans Code, monospace";
       ctx.fillText(`Carrier Frame #${i.toString().padStart(2, "0")} [AFS Active]`, 14, 26);
@@ -246,7 +264,10 @@ class StegoPipelineEngine {
   }
 
   /**
-   * Main Embedding Pipeline: Uses Adaptive Frame Selection + Spatial LSB (Least Significant Bit).
+   * Main Embedding Pipeline:
+   * 1. Analyzes frames using Adaptive Frame Selection (AFS).
+   * 2. Selects suitable frames for data embedding, skipping static frames to avoid detection.
+   * 3. Embeds secret data into selected frames using spatial LSB substitution.
    */
   static async embedPipeline({
     frames,
@@ -263,20 +284,21 @@ class StegoPipelineEngine {
       return new ImageData(new Uint8ClampedArray(f.data), f.width, f.height);
     });
 
-    // Evaluate Adaptive Frame Selection Scores
+    // 1. Run Adaptive Frame Selection (AFS)
     const afsScores = AdaptiveFrameSelector.evaluateFrames(frames);
+    const selectedIndices = AdaptiveFrameSelector.selectCandidateFrames(frames, totalBits, bitsPerChannel);
 
     let bitCursor = 0;
     let framesAltered = 0;
-    const selectedIndices = [];
+    const actuallyAlteredIndices = [];
 
-    // Embed sequentially into carrier frames using LSB across RGB channels
-    for (let frameIdx = 0; frameIdx < stegoFrames.length; frameIdx++) {
+    // 2. Embed into ONLY the selected frames
+    for (let frameIdx of selectedIndices) {
       if (bitCursor >= totalBits) break;
 
       const frame = stegoFrames[frameIdx];
       const { data } = frame;
-      selectedIndices.push(frameIdx);
+      actuallyAlteredIndices.push(frameIdx);
       framesAltered++;
 
       for (let i = 0; i < data.length; i += 4) {
@@ -295,12 +317,15 @@ class StegoPipelineEngine {
       }
     }
 
-    const metrics = this.evaluateMetrics(frames, stegoFrames, selectedIndices);
+    const metrics = this.evaluateMetrics(frames, stegoFrames, actuallyAlteredIndices);
 
     return {
       success: true,
       stegoFrames,
-      selectedIndices,
+      selectedIndices: actuallyAlteredIndices,
+      allCandidateIndices: selectedIndices,
+      totalFrames: frames.length,
+      skippedFramesCount: frames.length - framesAltered,
       afsScores,
       metrics,
       method: 'adaptive_lsb',
@@ -313,7 +338,8 @@ class StegoPipelineEngine {
   }
 
   /**
-   * Main Extraction Pipeline: Extracts LSB bits from carrier frames and validates CRC32.
+   * Main Extraction Pipeline:
+   * Uses the same Adaptive Frame Selection (AFS) process to identify the carrier frames and recover the LSB data.
    */
   static async extractPipeline({
     stegoFrames,
@@ -324,13 +350,17 @@ class StegoPipelineEngine {
       return { success: false, error: "No carrier frames available for extraction." };
     }
 
+    // Run the same AFS candidate selection
+    const candidateIndices = AdaptiveFrameSelector.selectCandidateFrames(stegoFrames, 0, bitsPerChannel);
+
     const extractedBits = [];
     const HEADER_BITS = 12 * 8; // 96 bits = [4B Magic] + [4B Length] + [4B CRC32]
     let expectedTotalBits = null;
     let expectedDataLen = null;
     let expectedCRC = null;
 
-    for (let frameIdx = 0; frameIdx < stegoFrames.length; frameIdx++) {
+    // Scan candidate frames in identical order
+    for (let frameIdx of candidateIndices) {
       const frame = stegoFrames[frameIdx];
       const { data } = frame;
 
@@ -357,6 +387,36 @@ class StegoPipelineEngine {
       }
 
       if (expectedTotalBits !== null && extractedBits.length >= expectedTotalBits) break;
+    }
+
+    // Fallback: If header wasn't found in candidate frames, scan all frames sequentially
+    if (!expectedTotalBits && extractedBits.length < HEADER_BITS && candidateIndices.length < stegoFrames.length) {
+      extractedBits.length = 0;
+      for (let frameIdx = 0; frameIdx < stegoFrames.length; frameIdx++) {
+        const frame = stegoFrames[frameIdx];
+        const { data } = frame;
+        for (let i = 0; i < data.length; i += 4) {
+          for (let c = 0; c < 3; c++) {
+            if (bitsPerChannel === 1) {
+              extractedBits.push(data[i + c] & 1);
+            } else {
+              extractedBits.push((data[i + c] >> 1) & 1);
+              extractedBits.push(data[i + c] & 1);
+            }
+            if (expectedTotalBits === null && extractedBits.length >= HEADER_BITS) {
+              const res = this._parseHeader(extractedBits);
+              if (res) {
+                expectedDataLen = res.dataLen;
+                expectedCRC = res.crc;
+                expectedTotalBits = HEADER_BITS + expectedDataLen * 8;
+              }
+            }
+            if (expectedTotalBits !== null && extractedBits.length >= expectedTotalBits) break;
+          }
+          if (expectedTotalBits !== null && extractedBits.length >= expectedTotalBits) break;
+        }
+        if (expectedTotalBits !== null && extractedBits.length >= expectedTotalBits) break;
+      }
     }
 
     if (extractedBits.length < HEADER_BITS) {
@@ -400,7 +460,7 @@ class StegoPipelineEngine {
       crcMatches,
       actualCrc,
       embeddedCrc,
-      method: "Adaptive Frame LSB",
+      method: "Adaptive Frame Selection + LSB",
       bitsPerChannel,
       integrityMessage: crcMatches ? "CRC32 Integrity 100% Validated (Lossless)" : "CRC32 Checksum Mismatch",
     };
@@ -408,10 +468,8 @@ class StegoPipelineEngine {
 
   /**
    * Auto-Detect Extraction Pipeline
-   * Automatically attempts LSB 1-Bit and LSB 2-Bit extraction and container trailer parsing.
    */
   static async autoExtractPipeline({ stegoFrames, fileMetadata }) {
-    // 1. If trailer metadata was embedded in the carrier file
     if (fileMetadata && fileMetadata.secretText) {
       const encoder = new TextEncoder();
       const payloadBytes = encoder.encode(fileMetadata.secretText);
@@ -424,7 +482,7 @@ class StegoPipelineEngine {
         actualCrc,
         embeddedCrc: actualCrc,
         integrityMessage: "CRC32 Integrity 100% Validated (Lossless)",
-        detectedAlgorithm: "Adaptive Frame Selection + Spatial LSB"
+        detectedAlgorithm: "Adaptive Frame Selection (AFS) + Spatial LSB"
       };
     }
 
@@ -450,7 +508,7 @@ class StegoPipelineEngine {
       }
     } catch (e) {}
 
-    // Fallback: try 1-Bit even if CRC didn't match perfectly
+    // Fallback: try 1-Bit
     try {
       const resFallback = await this.extractPipeline({ stegoFrames, method: "adaptive_lsb", bitsPerChannel: 1 });
       if (resFallback.success) {
@@ -488,9 +546,13 @@ class StegoPipelineEngine {
     let totalSsim = 0;
     const frameMetrics = [];
 
-    for (let idx of selectedIndices) {
+    const indicesToEval = (selectedIndices && selectedIndices.length > 0) ? selectedIndices : [0];
+
+    for (let idx of indicesToEval) {
       const orig = origFrames[idx];
       const stego = stegoFrames[idx];
+      if (!orig || !stego) continue;
+
       const { width, height } = orig;
       const oData = orig.data;
       const sData = stego.data;
@@ -525,7 +587,7 @@ class StegoPipelineEngine {
       });
     }
 
-    const count = selectedIndices.length || 1;
+    const count = indicesToEval.length || 1;
     return {
       avgPsnr: Math.round((totalPsnr / count) * 100) / 100,
       avgMse: Math.round((totalMse / count) * 1000000) / 1000000,
