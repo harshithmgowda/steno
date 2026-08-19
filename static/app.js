@@ -315,7 +315,7 @@ function setupDownloadHandlers() {
         );
 
         VideoExporter.downloadFile(exportResult.blob, exportResult.filename);
-        showStegoToast(`Stego video downloaded (${(exportResult.sizeBytes / 1024).toFixed(1)} KB)!`, 'fa-file-video');
+        showStegoToast(`Stego MP4 video downloaded (${(exportResult.sizeBytes / 1024).toFixed(1)} KB)!`, 'fa-file-video');
       } catch (err) {
         console.error('Video download error:', err);
         alert(`Error exporting stego video: ${err.message}`);

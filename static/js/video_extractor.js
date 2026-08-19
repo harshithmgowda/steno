@@ -218,12 +218,14 @@ class VideoExporter {
       const ctx = canvas.getContext("2d");
 
       const mimeTypes = [
+        "video/mp4;codecs=avc1",
+        "video/mp4;codecs=h264",
+        "video/mp4",
         "video/webm;codecs=vp9",
         "video/webm;codecs=vp8",
-        "video/webm",
-        "video/mp4"
+        "video/webm"
       ];
-      let selectedMime = mimeTypes.find((m) => MediaRecorder.isTypeSupported(m)) || "video/webm";
+      let selectedMime = mimeTypes.find((m) => MediaRecorder.isTypeSupported(m)) || "video/mp4";
 
       const stream = canvas.captureStream(fps);
       let recorder;
@@ -256,8 +258,8 @@ class VideoExporter {
 
         const fullBlob = new Blob([...chunks, trailerBlob], { type: selectedMime });
         const url = URL.createObjectURL(fullBlob);
-        const filename = `stego_video_${Date.now()}.webm`;
-        onProgress(100, "Stego video compilation complete!");
+        const filename = `stego_video_${Date.now()}.mp4`;
+        onProgress(100, "Stego MP4 video export complete!");
         resolve({
           blob: fullBlob,
           url,
