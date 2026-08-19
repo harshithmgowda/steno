@@ -322,7 +322,52 @@ function recalculateAFS() {
 
   renderFrameGallery(analysis);
   selectFrameForDeepInspect(0, analysis);
+  renderAFSDifferenceTable(analysis);
   updateDWTView(0);
+}
+
+// Render AFS Motion Difference Classification Table (Abhishek's Feature)
+function renderAFSDifferenceTable(analysis) {
+  const tbody = document.getElementById('afs-difference-tbody');
+  if (!tbody || !analysis) return;
+
+  tbody.innerHTML = '';
+
+  analysis.slice(0, 10).forEach((item, idx) => {
+    const isSelected = AppState.selectedIndices.includes(item.index);
+    const score = item.motionScore;
+    let classification = '';
+    let decisionBadge = '';
+    let rationale = '';
+
+    if (idx === 0) {
+      classification = '<span class="tag tag-warning">Reference Frame</span>';
+      decisionBadge = '<span class="tag tag-danger">❌ Skipped</span>';
+      rationale = 'First frame serves as baseline for motion calculation';
+    } else if (score >= 60 || isSelected) {
+      classification = '<span class="tag tag-success">High Difference (&ge; 60)</span>';
+      decisionBadge = '<span class="tag tag-success">✅ Select Carrier</span>';
+      rationale = 'Rapid motion & textures mask LSB alterations completely';
+    } else if (score >= 30) {
+      classification = '<span class="tag tag-warning">Medium Difference (30–59)</span>';
+      decisionBadge = isSelected ? '<span class="tag tag-success">✅ Candidate Picked</span>' : '<span class="tag tag-danger">❌ Skipped</span>';
+      rationale = 'Moderate motion; selected if texture entropy is high';
+    } else {
+      classification = '<span class="tag tag-danger">Low Difference (&lt; 30)</span>';
+      decisionBadge = '<span class="tag tag-danger">❌ Don\'t Select</span>';
+      rationale = 'Smooth/static area; high risk of steganalytic detection';
+    }
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>Frame #${item.index.toString().padStart(2, '0')}</strong></td>
+      <td><span class="font-mono">${idx === 0 ? '—' : score.toFixed(1)}</span></td>
+      <td>${classification}</td>
+      <td>${decisionBadge}</td>
+      <td><small class="text-muted">${rationale}</small></td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
 // Render Frame Gallery Cards

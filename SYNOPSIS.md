@@ -2,7 +2,7 @@
 
 ## Project Title
 **DIGITAL VIDEO STEGANOGRAPHY**
-*Multi-Layer Secure Information Hiding using AES-256 Encryption, 2D-Discrete Wavelet Transform (DWT), Adaptive Frame Selection (AFS), and Least Significant Bit (LSB) Technique*
+*Using LSB + Adaptive Frame Selection (AFS)*
 
 ---
 
@@ -19,28 +19,90 @@
 
 ---
 
-### 1. Abstract & Introduction
-Digital Video Steganography is a specialized technique used to hide secret information inside a digital video stream without noticeably changing its visual appearance or playback quality. A video consists of a continuous sequence of image frames, providing a vastly larger medium for information concealment compared to static single images.
+### 1. Introduction
+Digital video steganography is a technique used to hide secret information inside a video without noticeably changing its visual appearance. A video consists of a sequence of frames, which provides a larger medium for hiding information compared with a single image.
 
-In this project, we develop a multi-layered, highly secure steganography system combining:
-1. **AES-256 Cryptography**: Pre-encrypts the confidential payload so that even if intercepted, it remains unreadable without the secret key.
-2. **Adaptive Frame Selection (AFS)**: Analyzes video frames based on spatial texture variance, Shannon entropy, and inter-frame motion dynamics to avoid unnecessary modification of every frame and reduce steganalytic detectability.
-3. **2D-Discrete Wavelet Transform (DWT)**: Decomposes carrier frames into 4 frequency subbands ($LL, LH, HL, HH$) to mask hidden bits in high-frequency detail components, minimizing visual distortion and maintaining video fidelity.
-4. **LSB Substitution**: Injects encrypted bits into the least significant bit planes of the chosen transform coefficients.
+In this project, we propose an **LSB + Adaptive Frame Selection (AFS)** approach. The traditional LSB technique hides secret data by modifying the least significant bits of pixel values. However, embedding data in every frame is unnecessary and can increase the chance of detection. Therefore, AFS is used to identify suitable frames for data embedding.
 
-The authorized receiver applies the identical deterministic frame-selection and DWT transformation process to recover and decrypt the hidden payload losslessly with CRC32/SHA verification.
+The proposed method first analyzes the video frames and selects frames that are suitable for hiding information. The secret data is then embedded into the selected frames using the LSB technique.
 
 ---
 
-### 2. Problem Statement & Motivation
-- **Data Interception Vulnerability**: Sensitive information transmitted across digital communication networks is susceptible to unauthorized interception, eavesdropping, and tampering.
-- **Limitation of Standalone Encryption**: Traditional encryption transforms data into obvious ciphertext, which alerts eavesdroppers to the existence of secret communications.
-- **Shortcomings of Naive LSB Steganography**: Modifying 100% of video frames indiscriminately introduces detectable statistical anomalies ($\chi^2$ attacks) and degrades overall video quality.
-- **Need for Hybrid Synergy**: Combining AES-256 encryption, 2D-DWT frequency decomposition, AFS intelligent frame filtering, and LSB embedding provides dual-layer security (cryptographic + steganographic) while retaining near-perfect visual imperceptibility.
+### 2. Step-by-Step Proposed Methodology
+
+#### Step 1: Extract Video Frames
+Suppose your video contains:
+$$\text{Frame 1, Frame 2, Frame 3, Frame 4, Frame 5, } \dots, \text{ Frame 100}$$
+
+You don't necessarily want to hide information in all 100 frames. Indiscriminately modifying every frame increases visual distortion and steganalysis risk.
 
 ---
 
-### 3. Literature Survey (Slides 5 & 6)
+#### Step 2: Select Suitable Frames (Adaptive Frame Selection - AFS)
+AFS calculates the difference score between the current frame and the previous frame:
+$$\Delta(F_t, F_{t-1}) = \frac{1}{M \times N} \sum_{x=1}^{M}\sum_{y=1}^{N} |F_t(x,y) - F_{t-1}(x,y)|$$
+
+Then classify the frames based on the difference score:
+- **Low difference** $\rightarrow$ ❌ **Don't select** (Static or flat background, high detection risk)
+- **Medium difference** $\rightarrow$ ⚠️ **Candidate** (Evaluated further)
+- **High difference** $\rightarrow$ ✅ **Select** (Dynamic motion & texture masks alterations)
+
+##### Frame Difference & Selection Table:
+| Frame | Difference score | Selection | Description |
+| :---: | :---: | :---: | :--- |
+| **1** | — | — | Reference Frame |
+| **2** | 8 | ❌ | Low difference (Skipped) |
+| **3** | 12 | ❌ | Low difference (Skipped) |
+| **4** | 67 | ✅ | High difference (Selected) |
+| **5** | 74 | ✅ | High difference (Selected) |
+| **6** | 10 | ❌ | Low difference (Skipped) |
+| **7** | 81 | ✅ | High difference (Selected) |
+
+AFS creates a list of suitable frames, such as:
+$$\text{Selected Frames} = \{4, 5, 7, 12, 17, 21, \dots\}$$
+
+You then embed your secret message **only in these selected frames**.
+
+> **Key Difference**: This selective frame targeting is the main advantage over traditional mini-project plain LSB approaches where every frame is modified sequentially.
+
+---
+
+#### Step 3: Apply LSB (Least Significant Bit Modification)
+Suppose a pixel in a selected frame has an RGB value:
+- $\text{Red (R)} = 10110110_2$
+- $\text{Green (G)} = 11001001_2$
+- $\text{Blue (B)} = 01101100_2$
+
+If the secret bit to embed is **`1`**, we modify the least significant bit of the channel:
+$$10110110_2 \longrightarrow 1011011\mathbf{1}_2$$
+
+The change is extremely small ($\pm 1$ in pixel intensity) and generally impossible to notice visually.
+
+The process is repeated across suitable pixels in the selected carrier frames until the secret payload is fully embedded.
+
+---
+
+#### Step 4: Data Extraction Pipeline
+1. The receiver receives the stego video.
+2. The receiver extracts the video frames.
+3. Using the exact same deterministic AFS difference scoring, the receiver computes the difference between consecutive frames and identifies the identical list of $\text{Selected Frames} = \{4, 5, 7, 12, 17, 21, \dots\}$.
+4. The receiver reads the LSBs from the pixels of the selected frames in order to reconstruct the secret message.
+
+---
+
+### 3. Key Differences & Advantages
+
+| Feature | Traditional Plain LSB | Proposed AFS + LSB Approach |
+| :--- | :--- | :--- |
+| **Frame Coverage** | Modifies 100% of video frames | Modifies only high-difference frames ($\approx 10\% - 30\%$) |
+| **Unmodified Frames** | 0% clean frames | 70% – 90% of frames remain 100% untouched |
+| **Steganalysis Risk** | High (static frames show statistical anomalies) | Low (motion & texture naturally mask bit changes) |
+| **Visual Quality (PSNR)**| Lower overall video PSNR | High video fidelity ($\text{PSNR} > 70\text{ dB}$, $\text{SSIM} > 0.999$) |
+| **Frame Detection** | Fixed sequential embedding | Dynamic threshold-based motion selection |
+
+---
+
+### 4. Literature Survey
 
 | SI No | Publication, Title & Year | Methodology | Objectives | Objectives Achieved | Objectives Not Achieved |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -53,77 +115,73 @@ The authorized receiver applies the identical deterministic frame-selection and 
 
 ---
 
-### 4. System Objectives
-1. **Secure Data Hiding**: Hide secret information inside video frames without being easily detected by human perception or statistical steganalysis.
-2. **Data Protection (Defense-in-Depth)**: Encrypt secret payload using AES-256 before embedding to prevent unauthorized access.
-3. **Preserve Video Quality**: Maintain high video fidelity with $\text{PSNR} > 70\text{ dB}$ and $\text{SSIM} > 0.999$.
-4. **Selective Frame Modification**: Confine modifications to a subset of carrier frames (e.g. 4%–35%), keeping 65%–96% of video frames untouched.
-5. **Lossless Data Extraction**: Enable authorized receivers to safely recover and decrypt the hidden message with 100% integrity validation.
-
----
-
-### 5. Architectural Modules & Methodology
+### 5. Architectural Pipeline & System Flow
 
 ```
-+-----------------------------------------------------------------------------------------+
-|                                 SENDER (EMBEDDING PIPELINE)                             |
-+-----------------------------------------------------------------------------------------+
-|                                                                                         |
-|  [Cover Video] ----> [1. Frame Extraction] ----> [2. AFS Frame Selection]               |
-|                                                               |                         |
-|                                                               v                         |
-|  [Secret Data] ---> [AES-256 Encryption] ----> [3. 2D-DWT Transformation (LL/LH/HL/HH)] |
-|                                                               |                         |
-|                                                               v                         |
-|                                                [4. LSB Embedding on DWT]                |
-|                                                               |                         |
-|                                                               v                         |
-|                                                [5. Stego Video Reconstruction]          |
-+-----------------------------------------------------------------------------------------+
-                                                |
-                                                v
-+-----------------------------------------------------------------------------------------+
-|                                RECEIVER (EXTRACTION PIPELINE)                           |
-+-----------------------------------------------------------------------------------------+
-|                                                                                         |
-|  [Stego Video] ----> [1. Frame Extraction] ----> [2. Deterministic AFS Selection]       |
-|                                                               |                         |
-|                                                               v                         |
-|                                                [3. 2D-DWT Transformation]               |
-|                                                               |                         |
-|                                                               v                         |
-|                                                [4. LSB Data Extraction]                 |
-|                                                               |                         |
-|                                                               v                         |
-|                                                [5. AES-256 Decryption + CRC]            |
-|                                                               |                         |
-|                                                               v                         |
-|                                                [Recovered Secret Data (Lossless)]       |
-+-----------------------------------------------------------------------------------------+
+========================================================================================
+                               EMBEDDING (SENDER)
+========================================================================================
+
+  [Cover Video]
+       │
+       ▼
+  [1. Frame Extraction] ──> Frame 1, Frame 2, Frame 3, Frame 4, Frame 5...
+       │
+       ▼
+  [2. AFS Frame Difference Analysis]
+       │  - Frame 2: Diff = 8   ❌ (Skip)
+       │  - Frame 3: Diff = 12  ❌ (Skip)
+       │  - Frame 4: Diff = 67  ✅ (Selected)
+       │  - Frame 5: Diff = 74  ✅ (Selected)
+       │  - Frame 7: Diff = 81  ✅ (Selected)
+       │
+       ▼
+  [Selected Frames List] ──> {4, 5, 7, 12, 17, 21...}
+       │
+       ▼
+  [3. LSB Pixel Embedding] ──> Modifies LSB of RGB channels (10110110 -> 10110111)
+       │
+       ▼
+  [4. Stego Video Generation] ──> Clean untouched frames + LSB modified frames
+
+========================================================================================
+                               EXTRACTION (RECEIVER)
+========================================================================================
+
+  [Stego Video]
+       │
+       ▼
+  [1. Frame Extraction]
+       │
+       ▼
+  [2. AFS Frame Difference Analysis] ──> Identifies Selected Frames: {4, 5, 7, 12, 17...}
+       │
+       ▼
+  [3. LSB Bit Extraction] ──> Reads LSBs from pixels of selected frames
+       │
+       ▼
+  [4. Reconstructed Secret Message]
 ```
 
 ---
 
-### 6. Mathematical Formulations
+### 6. Mathematical Evaluation Metrics
 
-1. **AES-256 Encryption**:
-   $$C = \text{AES-GCM}_{K}(\text{Plaintext}, \text{IV})$$
-2. **2D Discrete Wavelet Transform (Haar Wavelet)**:
-   $$LL(x, y) = \frac{1}{2}\left(I(2x, 2y) + I(2x+1, 2y) + I(2x, 2y+1) + I(2x+1, 2y+1)\right)$$
-   $$HH(x, y) = \frac{1}{2}\left(I(2x, 2y) - I(2x+1, 2y) - I(2x, 2y+1) + I(2x+1, 2y+1)\right)$$
-3. **Adaptive Frame Selection Composite Score**:
-   $$S(F_t) = w_1 \cdot \text{Var}\left(\nabla^2 F_t\right) + w_2 \cdot H(F_t) + w_3 \cdot \Delta M_t$$
-4. **Peak Signal-to-Noise Ratio (PSNR)**:
-   $$\text{PSNR} = 10 \cdot \log_{10}\left(\frac{255^2}{\text{MSE}}\right)\text{ dB}$$
+1. **Mean Squared Error (MSE)**:
+   $$\text{MSE} = \frac{1}{M \times N} \sum_{i=1}^{M} \sum_{j=1}^{N} \left[ I(i, j) - K(i, j) \right]^2$$
+
+2. **Peak Signal-to-Noise Ratio (PSNR)**:
+   $$\text{PSNR} = 10 \cdot \log_{10} \left( \frac{255^2}{\text{MSE}} \right) \text{ dB}$$
+
+3. **Structural Similarity Index (SSIM)**:
+   $$\text{SSIM}(x, y) = \frac{(2\mu_x\mu_y + c_1)(2\sigma_{xy} + c_2)}{(\mu_x^2 + \mu_y^2 + c_1)(\sigma_x^2 + \sigma_y^2 + c_2)}$$
 
 ---
 
-### 7. Work to be Done & Roadmap (Slide 15)
-- [x] Develop the video steganography core engine for hiding secret data inside video sequences.
-- [x] Implement AES-256 pre-encryption before data embedding.
-- [x] Implement 2D-DWT wavelet decomposition ($LL, LH, HL, HH$) on carrier frames.
-- [x] Implement Adaptive Frame Selection (AFS) scoring and selective frame modification.
-- [x] Build interactive web application for live demonstration, frame inspection, and diagrams.
-- [x] Configure zero-config Vercel hosting setup (`vercel.json`).
-- [ ] Conduct extended codec testing across lossy H.264 and HEVC video containers.
-- [ ] Complete final performance analysis, benchmark documentation, and university project report.
+### 7. Current Progress & Roadmap
+- [x] Frame extraction and video processing pipeline.
+- [x] Adaptive Frame Selection (AFS) inter-frame difference computation.
+- [x] Threshold-based frame classification (Low $\rightarrow$ Skip, High $\rightarrow$ Select).
+- [x] LSB bit-level embedding and lossless bit extraction.
+- [x] Interactive web demonstration and visual comparison UI.
+- [x] Frame difference table, statistics, and metric calculation (PSNR/MSE).

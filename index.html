@@ -46,7 +46,7 @@
         </div>
         <div class="brand-text">
           <h1>DIGITAL VIDEO STEGANOGRAPHY</h1>
-          <p class="subtitle">AES-256 Encryption + 2D-DWT + Adaptive Frame Selection (AFS) + LSB</p>
+          <p class="subtitle">LSB Embedding + Adaptive Frame Selection (AFS)</p>
         </div>
       </div>
 
@@ -440,6 +440,81 @@
               <div class="metric-pill"><span>Texture Var:</span> <strong id="inspect-tex">--</strong></div>
               <div class="metric-pill"><span>Entropy:</span> <strong id="inspect-ent">--</strong></div>
               <div class="metric-pill"><span>Motion Energy:</span> <strong id="inspect-mot">--</strong></div>
+            </div>
+
+            <!-- Pixel-Level LSB Bit Transformer (Abhishek's Example) -->
+            <div class="pixel-lsb-demo-box">
+              <div class="pixel-lsb-header">
+                <h4><i class="fa-solid fa-microchip text-cyan"></i> Pixel-Level LSB Bit Substitution (Mathematical Demonstration)</h4>
+                <span class="tag tag-success">1-Bit LSB Embedding</span>
+              </div>
+              <div class="pixel-channels-grid">
+                <div class="channel-card red-channel">
+                  <div class="channel-title">Red Channel (R)</div>
+                  <div class="bit-row">
+                    <span class="bit-label">Original:</span>
+                    <span class="bit-val">1011011<strong class="bit-orig">0</strong><sub>2</sub> (182)</span>
+                  </div>
+                  <div class="bit-op"><i class="fa-solid fa-arrow-down"></i> Embed Secret Bit <strong>1</strong></div>
+                  <div class="bit-row">
+                    <span class="bit-label">Stego LSB:</span>
+                    <span class="bit-val">1011011<strong class="bit-mod">1</strong><sub>2</sub> (183)</span>
+                  </div>
+                  <div class="delta-tag">Intensity Delta: +1 (+0.39%)</div>
+                </div>
+
+                <div class="channel-card green-channel">
+                  <div class="channel-title">Green Channel (G)</div>
+                  <div class="bit-row">
+                    <span class="bit-label">Original:</span>
+                    <span class="bit-val">1100100<strong class="bit-orig">1</strong><sub>2</sub> (201)</span>
+                  </div>
+                  <div class="bit-op"><i class="fa-solid fa-arrow-down"></i> Embed Secret Bit <strong>0</strong></div>
+                  <div class="bit-row">
+                    <span class="bit-label">Stego LSB:</span>
+                    <span class="bit-val">1100100<strong class="bit-mod">0</strong><sub>2</sub> (200)</span>
+                  </div>
+                  <div class="delta-tag">Intensity Delta: -1 (-0.39%)</div>
+                </div>
+
+                <div class="channel-card blue-channel">
+                  <div class="channel-title">Blue Channel (B)</div>
+                  <div class="bit-row">
+                    <span class="bit-label">Original:</span>
+                    <span class="bit-val">0110110<strong class="bit-orig">0</strong><sub>2</sub> (108)</span>
+                  </div>
+                  <div class="bit-op"><i class="fa-solid fa-arrow-down"></i> Embed Secret Bit <strong>1</strong></div>
+                  <div class="bit-row">
+                    <span class="bit-label">Stego LSB:</span>
+                    <span class="bit-val">0110110<strong class="bit-mod">1</strong><sub>2</sub> (109)</span>
+                  </div>
+                  <div class="delta-tag">Intensity Delta: +1 (+0.39%)</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Inter-Frame Difference Classification Matrix (Abhishek's Table) -->
+            <div class="afs-classification-box">
+              <div class="pixel-lsb-header">
+                <h4><i class="fa-solid fa-table-list text-purple"></i> Inter-Frame Motion Difference Classification Matrix</h4>
+                <span class="tag tag-accent">Adaptive Thresholding Rule</span>
+              </div>
+              <div class="table-responsive">
+                <table class="custom-table table-compact" id="afs-difference-table">
+                  <thead>
+                    <tr>
+                      <th>Frame</th>
+                      <th>Difference Score (&Delta;)</th>
+                      <th>Classification</th>
+                      <th>Decision</th>
+                      <th>Steganographic Rationale</th>
+                    </tr>
+                  </thead>
+                  <tbody id="afs-difference-tbody">
+                    <!-- Populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>

@@ -1396,6 +1396,120 @@ body {
   color: var(--text-muted);
 }
 
+/* Pixel-Level LSB Transformer & AFS Table Styles (Abhishek's Feature) */
+.pixel-lsb-demo-box, .afs-classification-box {
+  background: rgba(9, 13, 22, 0.8);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  margin-top: 20px;
+}
+
+.pixel-lsb-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border-glass);
+  padding-bottom: 8px;
+}
+
+.pixel-lsb-header h4 {
+  font-size: 14px;
+  font-family: var(--font-heading);
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pixel-channels-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 850px) {
+  .pixel-channels-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.channel-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  position: relative;
+}
+
+.channel-card.red-channel { border-top: 3px solid #f43f5e; }
+.channel-card.green-channel { border-top: 3px solid #10b981; }
+.channel-card.blue-channel { border-top: 3px solid #38bdf8; }
+
+.channel-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 10px;
+}
+
+.bit-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-family: var(--font-code);
+  margin-bottom: 4px;
+}
+
+.bit-label {
+  color: var(--text-muted);
+}
+
+.bit-val {
+  color: var(--text-main);
+}
+
+.bit-orig {
+  color: #fbbf24;
+  text-decoration: underline;
+}
+
+.bit-mod {
+  color: #00f2fe;
+  font-weight: 700;
+  text-decoration: underline;
+  background: rgba(0, 242, 254, 0.2);
+  padding: 1px 3px;
+  border-radius: 2px;
+}
+
+.bit-op {
+  font-size: 10px;
+  color: var(--primary-cyan);
+  text-align: center;
+  margin: 6px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.delta-tag {
+  font-size: 10px;
+  font-family: var(--font-code);
+  color: #34d399;
+  text-align: right;
+  margin-top: 6px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  padding-top: 4px;
+}
+
+.table-compact th, .table-compact td {
+  padding: 10px 14px;
+  font-size: 12px;
+}
+
 /* Loading Spinner */
 .loading-state {
   display: flex;
