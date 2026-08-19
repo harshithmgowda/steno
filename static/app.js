@@ -24,7 +24,6 @@ const AppState = {
 const DOM = {
   navTabs: document.querySelectorAll('.nav-tab'),
   tabPanes: document.querySelectorAll('.tab-pane'),
-  btnLoadSample: document.getElementById('btn-load-sample'),
   btnUploadVideo: document.getElementById('btn-upload-video'),
   videoFileInput: document.getElementById('video-file-input'),
   videoUploadProgress: document.getElementById('video-upload-progress'),
@@ -212,14 +211,6 @@ function setupControls() {
       updateCharCounter();
     });
     updateCharCounter();
-  }
-
-  if (DOM.btnLoadSample) {
-    DOM.btnLoadSample.addEventListener('click', () => {
-      if (DOM.videoPreviewWrapper) DOM.videoPreviewWrapper.classList.add('hidden');
-      initSyntheticVideo();
-      showStegoToast('Dynamic AI video carrier sequence generated!', 'fa-wand-magic-sparkles');
-    });
   }
 
   if (DOM.btnUploadVideo && DOM.videoFileInput) {
