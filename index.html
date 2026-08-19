@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Video Steganography | DBIT Dept of ISE</title>
+  
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <!-- Atmospheric Glows -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+  <div class="bg-glow bg-glow-3"></div>
+
+  <!-- College & Project Header Banner -->
+  <div class="college-bar">
+    <div class="college-bar-inner">
+      <div class="college-info">
+        <span class="college-badge"><i class="fa-solid fa-university"></i> Don Bosco Institute of Technology (DBIT)</span>
+        <span class="dept-badge">Department of Information Science & Engineering (ISE)</span>
+        <span class="ay-badge">Academic Year 2025–26</span>
+      </div>
+      <div class="guide-info">
+        <span>Under The Guidance Of: <strong>Dr. Ramya K V</strong> (Associate Professor, Dept of ISE)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div class="brand-text">
+          <h1>DIGITAL VIDEO STEGANOGRAPHY</h1>
+          <p class="subtitle">AES-256 Encryption + 2D-DWT + Adaptive Frame Selection (AFS) + LSB</p>
+        </div>
+      </div>
+
+      <!-- Team Members Modal / Dropdown Trigger -->
+      <div class="team-capsule" id="team-capsule" title="Click to view Project Team">
+        <div class="team-avatars">
+          <span class="avatar-tag">AC</span>
+          <span class="avatar-tag">AG</span>
+          <span class="avatar-tag highlight">HG</span>
+          <span class="avatar-tag">AS</span>
+        </div>
+        <div class="team-label">
+          <strong>Team ISE-06</strong>
+          <span>4 Members</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-tab="studio">
+        <i class="fa-solid fa-flask"></i> <span>Live Studio</span>
+      </button>
+      <button class="nav-tab" data-tab="dwt">
+        <i class="fa-solid fa-water"></i> <span>2D-DWT Wavelets</span>
+      </button>
+      <button class="nav-tab" data-tab="inspector">
+        <i class="fa-solid fa-film"></i> <span>AFS Frame Inspector</span>
+      </button>
+      <button class="nav-tab" data-tab="diagrams">
+        <i class="fa-solid fa-diagram-project"></i> <span>System Diagrams</span>
+      </button>
+      <button class="nav-tab" data-tab="literature">
+        <i class="fa-solid fa-book-bookmark"></i> <span>Literature Survey</span>
+      </button>
+      <button class="nav-tab" data-tab="metrics">
+        <i class="fa-solid fa-chart-pie"></i> <span>Quality Analytics</span>
+      </button>
+      <button class="nav-tab" data-tab="viva">
+        <i class="fa-solid fa-graduation-cap"></i> <span>Presentation & Viva</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- Team Members Banner -->
+  <div class="team-drawer" id="team-drawer">
+    <div class="team-grid">
+      <div class="team-member-card">
+        <div class="member-role">Student 1</div>
+        <div class="member-name">Abhishek C</div>
+        <div class="member-usn">1DB23IS002</div>
+      </div>
+      <div class="team-member-card">
+        <div class="member-role">Student 2</div>
+        <div class="member-name">Abhishek G</div>
+        <div class="member-usn">1DB23IS003</div>
+      </div>
+      <div class="team-member-card highlight-card">
+        <div class="member-role">Student 3</div>
+        <div class="member-name">Harshith Gowda B S</div>
+        <div class="member-usn">1DB23IS060</div>
+      </div>
+      <div class="team-member-card">
+        <div class="member-role">Student 4</div>
+        <div class="member-name">Anjaneya S H</div>
+        <div class="member-usn">1DB23IS018</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Application Container -->
+  <main class="main-container">
+
+    <!-- ================================================================= -->
+    <!-- TAB 1: LIVE STEGO STUDIO -->
+    <!-- ================================================================= -->
+    <section id="tab-studio" class="tab-pane active">
+      <div class="studio-grid">
+        
+        <!-- Left Panel: Controls & Video Ingestion -->
+        <div class="panel glass-card">
+          <div class="panel-header">
+            <h2><i class="fa-solid fa-sliders"></i> 1. Ingestion & AFS Parameters</h2>
+            <button id="btn-load-sample" class="btn btn-secondary btn-sm">
+              <i class="fa-solid fa-rotate"></i> Regenerate Video
+            </button>
+          </div>
+
+          <div class="panel-body">
+            <!-- Video Stats Card -->
+            <div class="video-info-box">
+              <div class="info-row">
+                <span class="label"><i class="fa-solid fa-video"></i> Video Stream:</span>
+                <span class="value highlight" id="stat-video-status">20 Frames Loaded</span>
+              </div>
+              <div class="info-grid">
+                <div class="mini-stat">
+                  <span class="sublabel">Total Frames</span>
+                  <span class="stat-num" id="stat-total-frames">20</span>
+                </div>
+                <div class="mini-stat">
+                  <span class="sublabel">Resolution</span>
+                  <span class="stat-num" id="stat-resolution">320x240</span>
+                </div>
+                <div class="mini-stat">
+                  <span class="sublabel">Carrier Frames</span>
+                  <span class="stat-num glow-cyan" id="stat-carrier-frames">7</span>
+                </div>
+                <div class="mini-stat">
+                  <span class="sublabel">Capacity</span>
+                  <span class="stat-num glow-green" id="stat-capacity">201.5 KB</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Parameters -->
+            <div class="control-group">
+              <label for="select-strategy">
+                <span>Adaptive Frame Selection (AFS)</span>
+                <i class="fa-solid fa-circle-info info-icon" title="Method used to score frame complexity and isolate high-entropy carriers."></i>
+              </label>
+              <select id="select-strategy" class="form-select">
+                <option value="hybrid" selected>Hybrid (Texture Variance + Entropy + Motion)</option>
+                <option value="texture_variance">Spatial Texture Variance (Laplacian Edge)</option>
+                <option value="motion_energy">Temporal Motion Energy (|Ft - Ft-1|)</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <div class="slider-header">
+                <label for="range-ratio">Carrier Selection Ratio</label>
+                <span class="slider-val" id="ratio-display">35%</span>
+              </div>
+              <input type="range" id="range-ratio" min="10" max="100" step="5" value="35" class="form-range">
+              <div class="slider-scale">
+                <span>10% (Ultra-Sparse)</span>
+                <span>50%</span>
+                <span>100% (Naive Full Video)</span>
+              </div>
+            </div>
+
+            <!-- AES-256 Password Key -->
+            <div class="control-group">
+              <label for="input-secret-key">
+                <span><i class="fa-solid fa-key text-rose"></i> AES-256 Secret Key / Password</span>
+                <span class="tag tag-danger">AES-256 Encryption</span>
+              </label>
+              <input type="password" id="input-secret-key" class="form-select" value="DBIT-ISE-Stego2026" placeholder="Enter secret password key">
+            </div>
+
+            <div class="control-group">
+              <label>LSB Bit Depth per Color Channel</label>
+              <div class="radio-toggle">
+                <label class="radio-card active">
+                  <input type="radio" name="bpc" value="1" checked>
+                  <span class="radio-title">1-Bit LSB</span>
+                  <span class="radio-desc">Max Imperceptibility (PSNR > 70 dB)</span>
+                </label>
+                <label class="radio-card">
+                  <input type="radio" name="bpc" value="2">
+                  <span class="radio-title">2-Bit LSB</span>
+                  <span class="radio-desc">2x Capacity (PSNR > 50 dB)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel: Dual Workflow (Embed & Extract) -->
+        <div class="panel-column">
+          
+          <!-- EMBEDDING PANEL -->
+          <div class="panel glass-card">
+            <div class="panel-header">
+              <h2><i class="fa-solid fa-lock"></i> 2. Sender: Encrypt (AES-256) & Embed (DWT + LSB)</h2>
+              <span class="badge badge-accent">Sender Module</span>
+            </div>
+
+            <div class="panel-body">
+              <div class="control-group">
+                <div class="textarea-header">
+                  <label for="secret-message-input">Confidential Secret Message</label>
+                  <span class="char-counter" id="char-counter">0 chars / 0 bytes</span>
+                </div>
+                <textarea id="secret-message-input" class="form-textarea" rows="3" placeholder="Enter confidential message to hide in video...">PROJECT TRANSMISSION: Digital Video Steganography System (Dept of ISE, DBIT). Data encrypted via AES-256 and embedded into DWT wavelet sub-bands of AFS carrier frames!</textarea>
+              </div>
+
+              <!-- AES Encryption Visualizer Bar -->
+              <div class="crypto-preview-box" id="crypto-preview-box">
+                <div class="crypto-title"><i class="fa-solid fa-shield-halved"></i> AES-256 Ciphertext Stream:</div>
+                <div class="crypto-hex" id="crypto-hex-display">Ready to encrypt...</div>
+              </div>
+
+              <div class="action-row">
+                <button id="btn-embed" class="btn btn-primary btn-lg">
+                  <i class="fa-solid fa-lock-open"></i> Run AES-256 + DWT + AFS + LSB Pipeline
+                </button>
+              </div>
+
+              <!-- Embedding Result Notification -->
+              <div id="embed-result-card" class="result-card hidden">
+                <div class="result-icon success"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="result-details">
+                  <h4>Embedding Completed Successfully!</h4>
+                  <p id="embed-result-msg">Payload encrypted with AES-256-GCM and embedded into high-frequency DWT coefficients of selected frames.</p>
+                  <div class="result-pills" id="embed-pills"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- EXTRACTION PANEL -->
+          <div class="panel glass-card">
+            <div class="panel-header">
+              <h2><i class="fa-solid fa-key"></i> 3. Receiver: Extract (LSB + DWT) & Decrypt (AES-256)</h2>
+              <span class="badge badge-success">Receiver Module</span>
+            </div>
+
+            <div class="panel-body">
+              <p class="section-desc">
+                The receiver deterministically applies the identical AFS filter, extracts bits from DWT coefficients, and decrypts the payload using the shared AES-256 Secret Key.
+              </p>
+
+              <div class="action-row">
+                <button id="btn-extract" class="btn btn-success btn-lg">
+                  <i class="fa-solid fa-unlock-keyhole"></i> Extract & Decrypt Secret Payload
+                </button>
+              </div>
+
+              <!-- Extraction Output Box -->
+              <div id="extract-result-box" class="extract-box hidden">
+                <div class="extract-header">
+                  <span class="extract-title"><i class="fa-solid fa-terminal"></i> Decrypted Secret Transmission:</span>
+                  <span class="integrity-badge verified" id="crc-badge">
+                    <i class="fa-solid fa-shield-check"></i> AES-256 & CRC VALIDATED
+                  </span>
+                </div>
+                <div class="extract-content" id="recovered-text-display"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 2: 2D-DWT WAVELET INSPECTOR -->
+    <!-- ================================================================= -->
+    <section id="tab-dwt" class="tab-pane">
+      <div class="glass-card panel">
+        <div class="panel-header">
+          <div>
+            <h2><i class="fa-solid fa-water text-cyan"></i> 2D Discrete Wavelet Transform (DWT) Decomposition</h2>
+            <p class="section-desc">
+              Slide 3 & 4 Architecture: Decomposes carrier video frame into 4 frequency subbands ($LL, LH, HL, HH$) for imperceptible data embedding.
+            </p>
+          </div>
+          <div class="dwt-frame-selector">
+            <label for="dwt-frame-select">Inspect Frame:</label>
+            <select id="dwt-frame-select" class="form-select select-sm"></select>
+          </div>
+        </div>
+
+        <div class="panel-body">
+          <div class="dwt-inspector-layout">
+            
+            <!-- Left: 4-Quadrant DWT Canvas -->
+            <div class="dwt-canvas-wrapper">
+              <div class="dwt-canvas-header">
+                <span>4-Quadrant 2D Haar Wavelet Decomposition</span>
+                <span class="tag tag-success">Active Carrier Frame</span>
+              </div>
+              <canvas id="dwt-canvas" class="dwt-canvas"></canvas>
+            </div>
+
+            <!-- Right: Sub-band Explanation Cards -->
+            <div class="dwt-explanation-cards">
+              <div class="dwt-card ll-card">
+                <div class="dwt-card-title"><span class="badge-subband">LL</span> Approximation Sub-Band (Low-Low)</div>
+                <p>Contains the fundamental average illumination and coarse structure of the frame. Kept clean to prevent visual distortion.</p>
+              </div>
+
+              <div class="dwt-card hl-card">
+                <div class="dwt-card-title"><span class="badge-subband">HL</span> Vertical Detail Sub-Band (High-Low)</div>
+                <p>Captures vertical edges and sharp boundaries. Ideal for steganographic embedding masked by Human Visual System (HVS).</p>
+              </div>
+
+              <div class="dwt-card lh-card">
+                <div class="dwt-card-title"><span class="badge-subband">LH</span> Horizontal Detail Sub-Band (Low-High)</div>
+                <p>Captures horizontal texture variations and fine lines. Used as carrier sub-band for encrypted bitstream.</p>
+              </div>
+
+              <div class="dwt-card hh-card">
+                <div class="dwt-card-title"><span class="badge-subband">HH</span> Diagonal Detail Sub-Band (High-High)</div>
+                <p>Contains high-frequency diagonal noise and texture corners where bit modifications produce zero noticeable visual artifacts.</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 3: AFS FRAME INSPECTOR -->
+    <!-- ================================================================= -->
+    <section id="tab-inspector" class="tab-pane">
+      <div class="glass-card panel">
+        <div class="panel-header">
+          <div>
+            <h2><i class="fa-solid fa-film"></i> Adaptive Frame Selection (AFS) Timeline</h2>
+            <p class="section-desc">
+              Scores each frame on Spatial Texture Variance ($\sigma^2$), Shannon Entropy ($H$), and Motion Difference ($\Delta M$).
+            </p>
+          </div>
+          <div class="legend-box">
+            <span class="legend-item"><span class="legend-dot selected"></span> Selected Carrier Frame</span>
+            <span class="legend-item"><span class="legend-dot clean"></span> Clean Unaltered Frame</span>
+          </div>
+        </div>
+
+        <div class="panel-body">
+          <div class="frame-gallery-container">
+            <div class="frame-gallery" id="frame-gallery">
+              <div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Analyzing Video Frames...</div>
+            </div>
+          </div>
+
+          <!-- Deep Frame Comparison Studio -->
+          <div class="deep-inspector-box">
+            <h3 class="inspector-title">
+              <i class="fa-solid fa-magnifying-glass-plus"></i> Frame Deep Inspection Studio: <span id="inspect-frame-title">Frame #00</span>
+            </h3>
+            
+            <div class="comparison-grid">
+              <div class="inspect-card">
+                <div class="inspect-header">Cover Frame (Original)</div>
+                <div class="inspect-img-box"><img id="inspect-orig-img" src="" alt="Original Frame"></div>
+              </div>
+
+              <div class="inspect-card">
+                <div class="inspect-header">Stego Frame (DWT + LSB Embedded)</div>
+                <div class="inspect-img-box"><img id="inspect-stego-img" src="" alt="Stego Frame"></div>
+              </div>
+
+              <div class="inspect-card">
+                <div class="inspect-header">LSB 1st Bit-Plane Visualizer</div>
+                <div class="inspect-img-box"><img id="inspect-lsb-img" src="" alt="LSB Bit Plane"></div>
+              </div>
+
+              <div class="inspect-card">
+                <div class="inspect-header">Difference Heatmap (x80 Amplified)</div>
+                <div class="inspect-img-box"><img id="inspect-diff-img" src="" alt="Difference Heatmap"></div>
+              </div>
+            </div>
+
+            <!-- Frame Metrics Summary -->
+            <div class="frame-metrics-bar">
+              <div class="metric-pill"><span>PSNR:</span> <strong id="inspect-psnr">--</strong></div>
+              <div class="metric-pill"><span>MSE:</span> <strong id="inspect-mse">--</strong></div>
+              <div class="metric-pill"><span>SSIM:</span> <strong id="inspect-ssim">--</strong></div>
+              <div class="metric-pill"><span>Texture Var:</span> <strong id="inspect-tex">--</strong></div>
+              <div class="metric-pill"><span>Entropy:</span> <strong id="inspect-ent">--</strong></div>
+              <div class="metric-pill"><span>Motion Energy:</span> <strong id="inspect-mot">--</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 4: SYSTEM DIAGRAMS (Slides 10 - 14) -->
+    <!-- ================================================================= -->
+    <section id="tab-diagrams" class="tab-pane">
+      <div class="glass-card panel">
+        <div class="panel-header">
+          <div>
+            <h2><i class="fa-solid fa-diagram-project text-cyan"></i> Project System Diagrams (Slides 10–14)</h2>
+            <p class="section-desc">Interactive diagrams as presented in the official DBIT ISE seminar review.</p>
+          </div>
+        </div>
+
+        <div class="panel-body">
+          <!-- Sub-navigation for Diagrams -->
+          <div class="diagram-subnav">
+            <button class="diagram-btn active" data-diagram="architecture">System Architecture (Slide 10)</button>
+            <button class="diagram-btn" data-diagram="dfd">Data Flow Diagram (Slide 11)</button>
+            <button class="diagram-btn" data-diagram="cfd">Control Flow Diagram (Slide 12)</button>
+            <button class="diagram-btn" data-diagram="sfd">System Flow Diagram (Slide 13)</button>
+            <button class="diagram-btn" data-diagram="std">State Transition Diagram (Slide 14)</button>
+          </div>
+
+          <!-- Diagram Containers -->
+          <div id="diagram-architecture" class="diagram-view active"></div>
+          <div id="diagram-dfd" class="diagram-view"></div>
+          <div id="diagram-cfd" class="diagram-view"></div>
+          <div id="diagram-sfd" class="diagram-view"></div>
+          <div id="diagram-std" class="diagram-view"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 5: LITERATURE SURVEY (Slides 5 - 6) -->
+    <!-- ================================================================= -->
+    <section id="tab-literature" class="tab-pane">
+      <div class="glass-card panel">
+        <div class="panel-header">
+          <div>
+            <h2><i class="fa-solid fa-book-bookmark text-cyan"></i> Literature Survey Matrix (Slides 5 & 6)</h2>
+            <p class="section-desc">Comprehensive comparative review of existing video steganography research papers.</p>
+          </div>
+        </div>
+
+        <div class="panel-body">
+          <div class="table-responsive">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>SI No</th>
+                  <th>Publication, Title & Year</th>
+                  <th>Methodology</th>
+                  <th>Objectives</th>
+                  <th>Objectives Achieved</th>
+                  <th>Objectives Not Achieved</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>1</strong></td>
+                  <td>Kumar et al., <em>Adaptive Video Steganography</em>, 2024</td>
+                  <td>Chaotic map + adaptive frame selection</td>
+                  <td>Improve security & capacity</td>
+                  <td><span class="tag tag-success">High security & capacity</span></td>
+                  <td><span class="tag tag-danger">Full attack resistance</span></td>
+                </tr>
+                <tr>
+                  <td><strong>2</strong></td>
+                  <td>Mohamed et al., <em>Motion Estimation Video Steganography</em>, 2025</td>
+                  <td>H.264 motion-vector method</td>
+                  <td>Real-time secure hiding</td>
+                  <td><span class="tag tag-success">Low distortion & overhead</span></td>
+                  <td><span class="tag tag-warning">Limited to H.264</span></td>
+                </tr>
+                <tr>
+                  <td><strong>3</strong></td>
+                  <td>Zhang et al., <em>HEVC Video Steganography</em>, 2026</td>
+                  <td>HEVC CU structure method</td>
+                  <td>Improve capacity & security</td>
+                  <td><span class="tag tag-success">Better quality & anti-steganalysis</span></td>
+                  <td><span class="tag tag-warning">Limited codec evaluation</span></td>
+                </tr>
+                <tr>
+                  <td><strong>4</strong></td>
+                  <td><em>Development of LSB Based Steganography Method for Video and Image Hiding</em>, 2024</td>
+                  <td>LSB-based embedding</td>
+                  <td>Hide image/data in video</td>
+                  <td><span class="tag tag-success">Simple and effective hiding</span></td>
+                  <td><span class="tag tag-danger">Limited robustness</span></td>
+                </tr>
+                <tr>
+                  <td><strong>5</strong></td>
+                  <td><em>Large-Capacity and Flexible Video Steganography via Invertible Neural Network</em>, 2023</td>
+                  <td>Invertible Neural Network (INN)</td>
+                  <td>Increase hiding capacity and flexibility</td>
+                  <td><span class="tag tag-success">Multiple secret videos can be hidden</span></td>
+                  <td><span class="tag tag-danger">High computational complexity</span></td>
+                </tr>
+                <tr>
+                  <td><strong>6</strong></td>
+                  <td><em>Deep Learning Based Coverless Video Steganography for Secret Audio</em>, 2025</td>
+                  <td>Deep learning + coverless steganography</td>
+                  <td>Hide secret audio in video securely</td>
+                  <td><span class="tag tag-success">Improved security and hiding capability</span></td>
+                  <td><span class="tag tag-warning">Further real-world robustness needed</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 6: QUALITY ANALYTICS -->
+    <!-- ================================================================= -->
+    <section id="tab-metrics" class="tab-pane">
+      <div class="metrics-dashboard">
+        <div class="metrics-cards-grid">
+          
+          <div class="metric-hero-card glass-card">
+            <div class="metric-icon-box cyan"><i class="fa-solid fa-chart-line"></i></div>
+            <div class="metric-val" id="metric-psnr">74.29 dB</div>
+            <div class="metric-name">Average PSNR (Carrier Frames)</div>
+            <div class="metric-sub">> 40 dB indicates zero perceptible distortion</div>
+          </div>
+
+          <div class="metric-hero-card glass-card">
+            <div class="metric-icon-box green"><i class="fa-solid fa-clone"></i></div>
+            <div class="metric-val" id="metric-ssim">0.999999</div>
+            <div class="metric-name">Structural Similarity (SSIM)</div>
+            <div class="metric-sub">1.0 = 100% mathematically identical</div>
+          </div>
+
+          <div class="metric-hero-card glass-card">
+            <div class="metric-icon-box purple"><i class="fa-solid fa-bullseye"></i></div>
+            <div class="metric-val" id="metric-mse">0.0024</div>
+            <div class="metric-name">Mean Squared Error (MSE)</div>
+            <div class="metric-sub">Near-zero pixel perturbation across video</div>
+          </div>
+
+          <div class="metric-hero-card glass-card">
+            <div class="metric-icon-box emerald"><i class="fa-solid fa-shield"></i></div>
+            <div class="metric-val" id="metric-clean-rate">95.0%</div>
+            <div class="metric-name">Unaltered Clean Video Frames</div>
+            <div class="metric-sub">Minimizes statistical footprint against steganalysis</div>
+          </div>
+
+        </div>
+
+        <!-- Comparative Analysis Table -->
+        <div class="glass-card panel">
+          <div class="panel-header">
+            <h2><i class="fa-solid fa-scale-balanced"></i> Architectural Comparison: Traditional LSB vs Proposed AES + DWT + AFS + LSB</h2>
+          </div>
+          <div class="panel-body">
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Evaluation Metric</th>
+                    <th>Traditional Video LSB</th>
+                    <th>Proposed AES-256 + DWT + AFS + LSB</th>
+                    <th>Advantage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Pre-Encryption</strong></td>
+                    <td><span class="tag tag-danger">None (Plaintext vulnerable)</span></td>
+                    <td><span class="tag tag-success">AES-256-GCM Password Key</span></td>
+                    <td>Cryptographically unbreakable without key</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Embedding Domain</strong></td>
+                    <td><span class="tag tag-danger">Spatial Only (Raw Pixels)</span></td>
+                    <td><span class="tag tag-success">2D-DWT Frequency Sub-bands</span></td>
+                    <td>High resistance to lossy compression</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Carrier Frames</strong></td>
+                    <td><span class="tag tag-danger">100% (Every Frame Altered)</span></td>
+                    <td><span class="tag tag-success">Adaptive (4% - 35% Selective)</span></td>
+                    <td>Sparse footprint evades $\chi^2$ steganalysis</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Visual Fidelity (PSNR)</strong></td>
+                    <td>~51.2 dB</td>
+                    <td><strong class="glow-cyan">> 74.0 dB</strong></td>
+                    <td>HVS masked in high-texture detail</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Integrity Validation</strong></td>
+                    <td><span class="tag tag-warning">None</span></td>
+                    <td><span class="tag tag-success">32-Bit CRC + SHA-256</span></td>
+                    <td>100% verified lossless recovery</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 7: TEACHER VIVA Q&A -->
+    <!-- ================================================================= -->
+    <section id="tab-viva" class="tab-pane">
+      <div class="glass-card panel">
+        <div class="panel-header">
+          <div>
+            <h2><i class="fa-solid fa-graduation-cap"></i> Teacher Presentation & Viva Q&A Guide</h2>
+            <p class="section-desc">Key technical talking points for your project review presentation.</p>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="qa-accordion" id="qa-accordion"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <p><strong>DIGITAL VIDEO STEGANOGRAPHY</strong> | Dept. of Information Science & Engineering (ISE), DBIT</p>
+      <p class="footer-sub">Team: Abhishek C (1DB23IS002) | Abhishek G (1DB23IS003) | Harshith Gowda B S (1DB23IS060) | Anjaneya S H (1DB23IS018)</p>
+      <p class="footer-sub">Under the Guidance of Dr. Ramya K V, Associate Professor, Dept of ISE | Academic Year 2025–26</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/static/js/crypto_engine.js"></script>
+  <script src="/static/js/dwt_engine.js"></script>
+  <script src="/static/js/afs_engine.js"></script>
+  <script src="/static/js/stego_engine.js"></script>
+  <script src="/static/js/diagrams.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
