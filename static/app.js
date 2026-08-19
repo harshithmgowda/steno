@@ -506,15 +506,17 @@ async function runStandaloneExtractor() {
         stegoFrames: framesToScan,
         fileMetadata: AppState.extractorFileMetadata
       });
-    } else if (selectedMode === 'dwt') {
-      result = await StegoPipelineEngine.extractPipeline({ stegoFrames: framesToScan, method: 'dwt' });
-      result.detectedAlgorithm = '2D-DWT Haar Wavelets (HH/HL subbands)';
     } else if (selectedMode === 'lsb-1') {
-      result = await StegoPipelineEngine.extractPipeline({ stegoFrames: framesToScan, method: 'lsb', bitsPerChannel: 1 });
-      result.detectedAlgorithm = 'Spatial LSB (1-Bit Depth)';
+      result = await StegoPipelineEngine.extractPipeline({ stegoFrames: framesToScan, method: 'adaptive_lsb', bitsPerChannel: 1 });
+      result.detectedAlgorithm = 'Adaptive Frame Selection + 1-Bit LSB';
     } else if (selectedMode === 'lsb-2') {
-      result = await StegoPipelineEngine.extractPipeline({ stegoFrames: framesToScan, method: 'lsb', bitsPerChannel: 2 });
-      result.detectedAlgorithm = 'Spatial LSB (2-Bit Depth)';
+      result = await StegoPipelineEngine.extractPipeline({ stegoFrames: framesToScan, method: 'adaptive_lsb', bitsPerChannel: 2 });
+      result.detectedAlgorithm = 'Adaptive Frame Selection + 2-Bit LSB';
+    } else {
+      result = await StegoPipelineEngine.autoExtractPipeline({
+        stegoFrames: framesToScan,
+        fileMetadata: AppState.extractorFileMetadata
+      });
     }
 
     if (DOM.extractorPlaceholderBox) DOM.extractorPlaceholderBox.classList.add('hidden');

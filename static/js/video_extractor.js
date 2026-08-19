@@ -7,8 +7,8 @@
 
 class VideoFrameExtractor {
   /**
-   * Intelligently extracts frames and payload from either a video file (.mp4, .webm, .mov, etc.),
-   * a lossless Stego carrier bundle (.stego, .json), or an image file (.png).
+   * Intelligently extracts frames and payload from either a video file (.mp4, .webm, .mov, etc.)
+   * or a lossless Stego carrier bundle (.stego, .json).
    * 
    * @param {File} file - Uploaded File object
    * @param {number} targetFramesCount - Number of frames to extract from video (default: 20)
@@ -19,15 +19,19 @@ class VideoFrameExtractor {
     const filename = file.name.toLowerCase();
     let fileMetadata = null;
 
-    // Check for trailer in binary/text
+    // Safely scan for payload trailer at the tail of the binary file without corrupting binary reads
     try {
-      const fileText = await file.text();
-      const trailerMatch = fileText.match(/__STENOVISION_PAYLOAD_START__\s*([\s\S]*?)\s*__STENOVISION_PAYLOAD_END__/);
+      const sliceSize = Math.min(file.size, 65536);
+      const tailSlice = file.slice(file.size - sliceSize, file.size);
+      const tailBuffer = await tailSlice.arrayBuffer();
+      const decoder = new TextDecoder("utf-8", { fatal: false });
+      const tailText = decoder.decode(tailBuffer);
+      const trailerMatch = tailText.match(/__STENOVISION_PAYLOAD_START__\s*([\s\S]*?)\s*__STENOVISION_PAYLOAD_END__/);
       if (trailerMatch && trailerMatch[1]) {
-        fileMetadata = JSON.parse(trailerMatch[1]);
+        fileMetadata = JSON.parse(trailerMatch[1].trim());
       }
     } catch (e) {
-      // Ignore text read error for raw binary
+      // Ignore if no trailer exists
     }
 
     // 1. Lossless Stego Package (.stego / .json)
@@ -77,7 +81,7 @@ class VideoFrameExtractor {
         metadata: bundle.metadata || {},
         fileMetadata: bundle.secretPayload ? {
           secretText: bundle.secretPayload,
-          method: bundle.method || 'dwt',
+          method: bundle.method || 'adaptive_lsb',
           crc: bundle.crc
         } : (fileMetadata || (bundle.metadata ? {
           secretText: bundle.metadata.secretText,
@@ -87,40 +91,7 @@ class VideoFrameExtractor {
       };
     }
 
-    // 2. Image File (.png, .jpg, .webp)
-    if (file.type.startsWith('image/')) {
-      onProgress(30, `Loading carrier image (${file.name})...`);
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = () => reject(new Error("Failed to load carrier image."));
-        img.src = url;
-      });
-
-      const width = img.naturalWidth - (img.naturalWidth % 2);
-      const height = img.naturalHeight - (img.naturalHeight % 2);
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, width, height);
-      const imgData = ctx.getImageData(0, 0, width, height);
-      URL.revokeObjectURL(url);
-
-      onProgress(100, `Carrier image decoded (${width}x${height})!`);
-      return {
-        frames: [imgData],
-        width,
-        height,
-        duration: 1.0,
-        fps: 1,
-        fileType: 'image',
-        fileMetadata
-      };
-    }
-
-    // 3. Video File (.mp4, .webm, .ogg, .mov, etc.)
+    // 2. Video File (.mp4, .webm, .ogg, .mov, etc.)
     const videoRes = await this.extractFrames(file, targetFramesCount, onProgress);
     videoRes.fileMetadata = fileMetadata;
     return videoRes;
@@ -172,7 +143,7 @@ class VideoFrameExtractor {
           onProgress(5, "Initializing video decoder...");
 
           for (let i = 0; i < numFrames; i++) {
-            const seekTime = Math.min(duration - 0.05, i * stepTime);
+            const seekTime = Math.min(Math.max(0, duration - 0.05), i * stepTime);
             await this.seekToTime(video, seekTime);
 
             ctx.drawImage(video, 0, 0, width, height);
@@ -203,7 +174,7 @@ class VideoFrameExtractor {
 
       video.onerror = () => {
         URL.revokeObjectURL(videoUrl);
-        reject(new Error("Unable to decode uploaded video file. Please use MP4, WebM, or Stego bundle format."));
+        reject(new Error("Unable to decode uploaded video file. Please use MP4, WebM, or Stego package format."));
       };
     });
   }
@@ -222,11 +193,11 @@ class VideoFrameExtractor {
 
 /**
  * Stego Video & Media Exporter
- * Generates downloadable WebM video files, lossless .stego packages, and PNG frames.
+ * Generates downloadable WebM video files and lossless .stego packages.
  */
 class VideoExporter {
   /**
-   * Encodes an array of ImageData frames into a downloadable WebM video with container metadata trailer.
+   * Encodes an array of ImageData frames into a clean, playable WebM video.
    * @param {ImageData[]} frames - Stego frames
    * @param {number} fps - Frame rate (default: 24)
    * @param {Function} onProgress - Progress callback
@@ -271,10 +242,10 @@ class VideoExporter {
       };
 
       recorder.onstop = () => {
-        // Append lossless container payload trailer
+        // Embed metadata trailer safely
         const trailerObj = {
           app: "STENOVISION AI",
-          method: metadata.method || 'dwt',
+          method: metadata.method || 'adaptive_lsb',
           secretText: metadata.secretText || '',
           crc: metadata.crc || null,
           bitsPerChannel: metadata.bitsPerChannel || 1,
@@ -285,8 +256,8 @@ class VideoExporter {
 
         const fullBlob = new Blob([...chunks, trailerBlob], { type: selectedMime });
         const url = URL.createObjectURL(fullBlob);
-        const filename = `stenovision_video_${Date.now()}.webm`;
-        onProgress(100, "Stego video export complete!");
+        const filename = `stego_video_${Date.now()}.webm`;
+        onProgress(100, "Stego video compilation complete!");
         resolve({
           blob: fullBlob,
           url,
@@ -298,7 +269,7 @@ class VideoExporter {
         });
       };
 
-      recorder.start();
+      recorder.start(100);
 
       let frameIndex = 0;
       const frameInterval = 1000 / fps;
@@ -313,7 +284,9 @@ class VideoExporter {
         } else {
           clearInterval(renderInterval);
           setTimeout(() => {
-            recorder.stop();
+            if (recorder.state === "recording") {
+              recorder.stop();
+            }
           }, 300);
         }
       }, frameInterval);
@@ -349,7 +322,7 @@ class VideoExporter {
       height,
       totalFrames: frames.length,
       fps: metadata.fps || 24,
-      method: metadata.method || "dwt",
+      method: metadata.method || "adaptive_lsb",
       crc: metadata.crc ? `0x${metadata.crc.toString(16).toUpperCase()}` : null,
       secretPayload: metadata.secretText || '',
       metadata,
@@ -359,7 +332,7 @@ class VideoExporter {
     const jsonString = JSON.stringify(bundle, null, 2);
     const blob = new Blob([jsonString], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-    const filename = `stenovision_carrier_bundle_${Date.now()}.stego`;
+    const filename = `stego_package_${Date.now()}.stego`;
 
     return {
       blob,
@@ -370,51 +343,20 @@ class VideoExporter {
   }
 
   /**
-   * Exports an individual frame or carrier image as a lossless PNG image with optional container metadata.
+   * Triggers a browser file download from a Blob.
    */
-  static exportFramePng(frame, filename = "stenovision_stego_image.png", metadata = {}) {
-    return new Promise((resolve) => {
-      const canvas = document.createElement("canvas");
-      canvas.width = frame.width;
-      canvas.height = frame.height;
-      const ctx = canvas.getContext("2d");
-      ctx.putImageData(frame, 0, 0);
-
-      canvas.toBlob((blob) => {
-        let finalBlob = blob;
-        if (metadata && metadata.secretText) {
-          const trailerObj = {
-            app: "STENOVISION AI",
-            type: "image",
-            method: metadata.method || 'dwt',
-            secretText: metadata.secretText || '',
-            crc: metadata.crc || null,
-            bitsPerChannel: metadata.bitsPerChannel || 1,
-            timestamp: Date.now()
-          };
-          const trailerText = `\n__STENOVISION_PAYLOAD_START__\n${JSON.stringify(trailerObj)}\n__STENOVISION_PAYLOAD_END__\n`;
-          const trailerBlob = new Blob([trailerText], { type: 'text/plain' });
-          finalBlob = new Blob([blob, trailerBlob], { type: 'image/png' });
-        }
-        const url = URL.createObjectURL(finalBlob);
-        resolve({ blob: finalBlob, url, filename });
-      }, "image/png");
-    });
-  }
-
-  static downloadFile(blobOrUrl, filename) {
-    const url = typeof blobOrUrl === "string" ? blobOrUrl : URL.createObjectURL(blobOrUrl);
+  static downloadFile(blob, filename) {
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
+    a.style.display = "none";
     a.href = url;
     a.download = filename;
     document.body.appendChild(a);
     a.click();
     setTimeout(() => {
       document.body.removeChild(a);
-      if (typeof blobOrUrl !== "string") {
-        URL.revokeObjectURL(url);
-      }
-    }, 150);
+      URL.revokeObjectURL(url);
+    }, 2000);
   }
 }
 
