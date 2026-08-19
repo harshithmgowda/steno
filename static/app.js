@@ -215,19 +215,18 @@ function setupControls() {
         DOM.uploadProgressText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Decoding ${file.name} video frames...`;
       }
 
-      VideoFrameExtractor.extractFramesFromVideo(
+      VideoFrameExtractor.extractFrames(
         file,
-        (progressPct) => {
+        24,
+        (progressPct, statusText) => {
           if (DOM.uploadProgressPct) DOM.uploadProgressPct.textContent = `${progressPct}%`;
           if (DOM.uploadProgressFill) DOM.uploadProgressFill.style.width = `${progressPct}%`;
-        },
-        24,
-        480,
-        360
+          if (DOM.uploadProgressText) DOM.uploadProgressText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${statusText || 'Decoding video frames...'}`;
+        }
       )
-        .then((extractedFrames) => {
+        .then((result) => {
           if (DOM.videoUploadProgress) DOM.videoUploadProgress.classList.add('hidden');
-          AppState.frames = extractedFrames;
+          AppState.frames = result.frames || result;
           AppState.stegoFrames = [];
           updateVideoStats();
           renderFrameGallery();

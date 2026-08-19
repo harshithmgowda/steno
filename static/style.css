@@ -1041,6 +1041,35 @@ body {
   background: var(--text-muted);
 }
 
+/* Frame Inspector Gallery */
+.legend-box {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legend-dot.selected {
+  background: var(--primary-cyan);
+  box-shadow: 0 0 8px var(--primary-cyan);
+}
+
+.legend-dot.clean {
+  background: var(--text-muted);
+}
+
 .frame-gallery-container {
   overflow-x: auto;
   padding-bottom: 12px;
@@ -1065,52 +1094,63 @@ body {
 
 .frame-card:hover {
   transform: translateY(-3px);
-  border-color: rgba(255, 255, 255, 0.25);
+  border-color: rgba(0, 242, 254, 0.4);
 }
 
-.frame-card.selected-carrier {
+.frame-card.active {
   border-color: var(--primary-cyan);
-  box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
+  box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
 }
 
-.frame-card.active-inspect {
-  border-color: #a855f7;
-  box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
-}
-
-.frame-card img {
+.frame-thumb-box {
+  position: relative;
   width: 100%;
-  height: 80px;
-  object-fit: cover;
+  height: 85px;
   border-radius: 4px;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.frame-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   display: block;
 }
 
-.frame-card-info {
-  margin-top: 6px;
+.frame-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: rgba(7, 9, 14, 0.85);
+  color: var(--primary-cyan);
+  font-family: var(--font-code);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 242, 254, 0.3);
 }
 
-.frame-card-num {
-  font-size: 11px;
-  font-weight: 700;
-  font-family: var(--font-code);
+.frame-info {
+  margin-top: 6px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
 }
 
-.carrier-badge {
-  font-size: 9px;
-  padding: 1px 4px;
-  border-radius: 3px;
-  background: var(--primary-cyan);
-  color: #07090e;
-  font-weight: 700;
-}
-
-.frame-card-score {
+.score-tag {
   font-size: 10px;
-  color: var(--text-muted);
-  margin-top: 2px;
+  font-family: var(--font-code);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.score-tag.cyan {
+  background: rgba(0, 242, 254, 0.15);
+  color: var(--primary-cyan);
+  border: 1px solid rgba(0, 242, 254, 0.3);
 }
 
 /* Deep Inspector Studio */
@@ -1164,17 +1204,19 @@ body {
 }
 
 .inspect-img-box {
-  height: 180px;
+  height: 190px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #000000;
+  padding: 4px;
 }
 
 .inspect-img-box img {
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
+  display: block;
 }
 
 .frame-metrics-bar {
