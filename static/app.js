@@ -11,6 +11,7 @@ const AppState = {
   frames: [],
   stegoFrames: [],
   activeInspectIndex: 0,
+  activeBitPlane: 0,
   dwtSubbandsMap: {},
   method: 'dwt', // 'dwt' | 'lsb' | 'hybrid'
   bitsPerChannel: 1,
@@ -58,9 +59,24 @@ const DOM = {
   inspectStegoImg: document.getElementById('inspect-stego-img'),
   inspectLsbImg: document.getElementById('inspect-lsb-img'),
   inspectDiffImg: document.getElementById('inspect-diff-img'),
+  activeBitplaneHeader: document.getElementById('active-bitplane-header'),
   inspectPsnr: document.getElementById('inspect-psnr'),
   inspectMse: document.getElementById('inspect-mse'),
   inspectSsim: document.getElementById('inspect-ssim'),
+  allBitplanesGrid: document.getElementById('all-bitplanes-grid'),
+  // Pixel values
+  rOrigVal: document.getElementById('r-orig-val'),
+  rSecretBit: document.getElementById('r-secret-bit'),
+  rStegoVal: document.getElementById('r-stego-val'),
+  rDeltaVal: document.getElementById('r-delta-val'),
+  gOrigVal: document.getElementById('g-orig-val'),
+  gSecretBit: document.getElementById('g-secret-bit'),
+  gStegoVal: document.getElementById('g-stego-val'),
+  gDeltaVal: document.getElementById('g-delta-val'),
+  bOrigVal: document.getElementById('b-orig-val'),
+  bSecretBit: document.getElementById('b-secret-bit'),
+  bStegoVal: document.getElementById('b-stego-val'),
+  bDeltaVal: document.getElementById('b-delta-val'),
   // 2D-DWT Inspector
   dwtCanvas: document.getElementById('dwt-canvas'),
   dwtFrameSelect: document.getElementById('dwt-frame-select'),
@@ -81,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupNavigation();
   setupTeamDrawer();
   setupControls();
+  setupBitPlaneToolbar();
   setupDiagramsSubnav();
   initSyntheticVideo();
   renderVivaQA();
@@ -102,6 +119,8 @@ function setupNavigation() {
 
       if (targetTab === 'dwt') {
         updateDWTView(AppState.activeInspectIndex);
+      } else if (targetTab === 'inspector') {
+        selectFrameForDeepInspect(AppState.activeInspectIndex);
       }
     });
   });
@@ -126,6 +145,19 @@ function setupDiagramsSubnav() {
       btn.classList.add('active');
       const view = document.getElementById(`diagram-${target}`);
       if (view) view.classList.add('active');
+    });
+  });
+}
+
+// Setup Bit Plane Selector Toolbar
+function setupBitPlaneToolbar() {
+  const buttons = document.querySelectorAll('#bitplane-buttons-group .bit-btn');
+  buttons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      buttons.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      AppState.activeBitPlane = parseInt(btn.getAttribute('data-bit'), 10);
+      renderActiveBitPlane(AppState.activeInspectIndex);
     });
   });
 }
@@ -264,7 +296,6 @@ function updateCapacityStat() {
   const w = AppState.frames[0].width;
   const h = AppState.frames[0].height;
 
-  // LSB has 3 bits/pixel, DWT embeds in HH/HL coefficients (approx 1.5 bits/pixel)
   let bytesPerFrame = (w * h * 3 * AppState.bitsPerChannel) / 8;
   if (AppState.method === 'dwt') {
     bytesPerFrame = (w * h * 1.5 * AppState.bitsPerChannel) / 8;
@@ -322,16 +353,16 @@ function renderFrameGallery() {
   });
 }
 
-// Select Frame for Deep Comparison
+// Select Frame for Deep Comparison & Bit-Plane Visualizer
 function selectFrameForDeepInspect(frameIdx) {
-  if (!AppState.frames[frameIdx]) return;
+  if (!AppState.frames || !AppState.frames[frameIdx]) return;
 
   DOM.inspectFrameTitle.textContent = `Frame #${frameIdx.toString().padStart(2, '0')}`;
 
   const origFrame = AppState.frames[frameIdx];
-  const stegoFrame = AppState.stegoFrames[frameIdx] || origFrame;
+  const stegoFrame = (AppState.stegoFrames && AppState.stegoFrames[frameIdx]) ? AppState.stegoFrames[frameIdx] : origFrame;
 
-  // Convert to Data URLs
+  // Convert Cover & Stego frames to Data URLs
   const origCanvas = document.createElement('canvas');
   origCanvas.width = origFrame.width;
   origCanvas.height = origFrame.height;
@@ -344,15 +375,15 @@ function selectFrameForDeepInspect(frameIdx) {
   stegoCanvas.getContext('2d').putImageData(stegoFrame, 0, 0);
   DOM.inspectStegoImg.src = stegoCanvas.toDataURL('image/png');
 
-  // LSB 1st Bit-Plane Visualizer
-  DOM.inspectLsbImg.src = generateBitPlaneDataURL(stegoFrame, 0);
+  // Render active Bit-Plane
+  renderActiveBitPlane(frameIdx);
 
   // Difference Heatmap
   DOM.inspectDiffImg.src = generateDiffHeatmapDataURL(origFrame, stegoFrame);
 
   // Frame metrics
-  const isAltered = AppState.stegoFrames.length > 0;
-  if (isAltered && AppState.lastMetrics) {
+  const isAltered = AppState.stegoFrames && AppState.stegoFrames.length > 0;
+  if (isAltered && AppState.lastMetrics && AppState.lastMetrics.frameMetrics) {
     const fm = AppState.lastMetrics.frameMetrics[frameIdx];
     DOM.inspectPsnr.textContent = fm ? `${fm.psnr} dB` : '74.2 dB';
     DOM.inspectMse.textContent = fm ? `${fm.mse}` : '0.002';
@@ -362,13 +393,108 @@ function selectFrameForDeepInspect(frameIdx) {
     DOM.inspectMse.textContent = '0.000000';
     DOM.inspectSsim.textContent = '1.000000';
   }
+
+  // Update Pixel-Level LSB demonstration with real pixel values from this frame
+  updatePixelDemo(origFrame, stegoFrame);
+
+  // Render Complete 8-Bit Planes Decomposition Grid
+  renderAll8BitPlanes(stegoFrame);
+}
+
+// Render active selected bit-plane
+function renderActiveBitPlane(frameIdx) {
+  if (!AppState.frames || !AppState.frames[frameIdx]) return;
+  const frame = (AppState.stegoFrames && AppState.stegoFrames[frameIdx]) ? AppState.stegoFrames[frameIdx] : AppState.frames[frameIdx];
+
+  const bit = AppState.activeBitPlane || 0;
+  const label = bit === 0 ? 'Bit 0 (LSB - Carrier Plane)' : (bit === 7 ? 'Bit 7 (MSB - Visual Plane)' : `Bit ${bit} Plane`);
+  if (DOM.activeBitplaneHeader) {
+    DOM.activeBitplaneHeader.textContent = `Active: ${label}`;
+  }
+
+  DOM.inspectLsbImg.src = generateBitPlaneDataURL(frame, bit);
+}
+
+// Update Pixel-Level LSB Substitution Demonstration with real values
+function updatePixelDemo(origFrame, stegoFrame) {
+  if (!origFrame || !DOM.rOrigVal) return;
+
+  const dataOrig = origFrame.data;
+  const dataStego = stegoFrame.data;
+
+  // Sample pixel at center
+  const sampleX = Math.floor(origFrame.width / 2);
+  const sampleY = Math.floor(origFrame.height / 2);
+  const pIdx = (sampleY * origFrame.width + sampleX) * 4;
+
+  const r0 = dataOrig[pIdx];
+  const g0 = dataOrig[pIdx + 1];
+  const b0 = dataOrig[pIdx + 2];
+
+  const r1 = dataStego[pIdx];
+  const g1 = dataStego[pIdx + 1];
+  const b1 = dataStego[pIdx + 2];
+
+  const toBin = (v) => v.toString(2).padStart(8, '0');
+
+  // Red
+  const rBin0 = toBin(r0);
+  const rBin1 = toBin(r1);
+  DOM.rOrigVal.innerHTML = `${rBin0.slice(0, 7)}<strong class="bit-orig">${rBin0[7]}</strong><sub>2</sub> (${r0})`;
+  DOM.rSecretBit.textContent = rBin1[7];
+  DOM.rStegoVal.innerHTML = `${rBin1.slice(0, 7)}<strong class="bit-mod">${rBin1[7]}</strong><sub>2</sub> (${r1})`;
+  const dR = r1 - r0;
+  DOM.rDeltaVal.textContent = `Intensity Delta: ${dR >= 0 ? '+' : ''}${dR} (${((dR / 255) * 100).toFixed(2)}%)`;
+
+  // Green
+  const gBin0 = toBin(g0);
+  const gBin1 = toBin(g1);
+  DOM.gOrigVal.innerHTML = `${gBin0.slice(0, 7)}<strong class="bit-orig">${gBin0[7]}</strong><sub>2</sub> (${g0})`;
+  DOM.gSecretBit.textContent = gBin1[7];
+  DOM.gStegoVal.innerHTML = `${gBin1.slice(0, 7)}<strong class="bit-mod">${gBin1[7]}</strong><sub>2</sub> (${g1})`;
+  const dG = g1 - g0;
+  DOM.gDeltaVal.textContent = `Intensity Delta: ${dG >= 0 ? '+' : ''}${dG} (${((dG / 255) * 100).toFixed(2)}%)`;
+
+  // Blue
+  const bBin0 = toBin(b0);
+  const bBin1 = toBin(b1);
+  DOM.bOrigVal.innerHTML = `${bBin0.slice(0, 7)}<strong class="bit-orig">${bBin0[7]}</strong><sub>2</sub> (${b0})`;
+  DOM.bSecretBit.textContent = bBin1[7];
+  DOM.bStegoVal.innerHTML = `${bBin1.slice(0, 7)}<strong class="bit-mod">${bBin1[7]}</strong><sub>2</sub> (${b1})`;
+  const dB = b1 - b0;
+  DOM.bDeltaVal.textContent = `Intensity Delta: ${dB >= 0 ? '+' : ''}${dB} (${((dB / 255) * 100).toFixed(2)}%)`;
+}
+
+// Render All 8 Bit-Planes (Bit 7 to Bit 0) Grid
+function renderAll8BitPlanes(frame) {
+  if (!DOM.allBitplanesGrid || !frame) return;
+
+  DOM.allBitplanesGrid.innerHTML = '';
+
+  for (let bit = 7; bit >= 0; bit--) {
+    const card = document.createElement('div');
+    card.className = 'mini-bitplane-card';
+
+    const bitUrl = generateBitPlaneDataURL(frame, bit);
+    const roleTag = bit === 0 ? 'LSB Carrier' : (bit === 7 ? 'MSB Coarse' : `Bit ${bit}`);
+
+    card.innerHTML = `
+      <div class="mini-bitplane-header">
+        <span>Bit Plane ${bit}</span>
+        <span class="bit-tag">${roleTag}</span>
+      </div>
+      <img src="${bitUrl}" class="mini-bitplane-img" alt="Bit Plane ${bit}">
+    `;
+
+    DOM.allBitplanesGrid.appendChild(card);
+  }
 }
 
 // Update 4-Quadrant 2D-DWT Visualizer
 function updateDWTView(frameIdx) {
-  if (!AppState.frames[frameIdx] || !DOM.dwtCanvas) return;
+  if (!AppState.frames || !AppState.frames[frameIdx] || !DOM.dwtCanvas) return;
 
-  const frame = AppState.stegoFrames[frameIdx] || AppState.frames[frameIdx];
+  const frame = (AppState.stegoFrames && AppState.stegoFrames[frameIdx]) ? AppState.stegoFrames[frameIdx] : AppState.frames[frameIdx];
   const { width, height, data } = frame;
 
   // Extract green channel
@@ -383,7 +509,7 @@ function updateDWTView(frameIdx) {
   DWTEngine.renderDWTToCanvas(dwtObj, DOM.dwtCanvas);
 }
 
-// Generate Bit-Plane Visualizer
+// Generate Bit-Plane Visualizer Data URL
 function generateBitPlaneDataURL(frame, bitIndex = 0) {
   const canvas = document.createElement('canvas');
   canvas.width = frame.width;
@@ -415,7 +541,7 @@ function generateDiffHeatmapDataURL(origImg, stegoImg) {
   const out = ctx.createImageData(origImg.width, origImg.height);
 
   const srcOrig = origImg.data;
-  const srcStego = stegoImg.data;
+  const srcStego = stegoImg ? stegoImg.data : origImg.data;
   const dst = out.data;
 
   for (let i = 0; i < srcOrig.length; i += 4) {
@@ -465,7 +591,7 @@ async function runEmbedding() {
 
       // Update Result Notification Card
       DOM.embedResultCard.classList.remove('hidden');
-      const methodLabel = AppState.method === 'dwt' ? '2D-DWT Wavelet Subbands (HH/HL)' : 'Spatial LSB Bit-Planes';
+      const methodLabel = AppState.method === 'dwt' ? '2D-DWT Integer Wavelet Subbands (HH/HL)' : 'Spatial LSB Bit-Planes';
       DOM.embedPills.innerHTML = `
         <span class="result-pill"><i class="fa-solid fa-water text-cyan"></i> Mode: ${methodLabel}</span>
         <span class="result-pill"><i class="fa-solid fa-shield-check text-emerald"></i> CRC32 Checksum Embedded: 0x${result.crc.toString(16).toUpperCase()}</span>
@@ -480,7 +606,7 @@ async function runEmbedding() {
       DOM.metricMse.textContent = `${result.metrics.avgMse}`;
       DOM.metricAlteredFrames.textContent = `${result.metrics.alteredFramesCount} / ${result.metrics.totalFrames}`;
 
-      // Refresh Inspector
+      // Refresh Inspector & DWT Visualizers
       selectFrameForDeepInspect(AppState.activeInspectIndex);
       updateDWTView(AppState.activeInspectIndex);
     }

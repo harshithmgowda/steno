@@ -359,7 +359,7 @@
           <div>
             <h2><i class="fa-solid fa-microchip"></i> LSB Bit-Plane & Frame Inspector</h2>
             <p class="section-desc">
-              Inspects individual bit planes (Bit 0 to Bit 7), difference heatmaps, and mathematical pixel-level LSB transformations.
+              Inspects individual bit planes (Bit 0 to Bit 7), difference heatmaps, all 8 bit-plane decompositions, and pixel-level LSB transformations.
             </p>
           </div>
         </div>
@@ -368,6 +368,24 @@
           <div class="frame-gallery-container">
             <div class="frame-gallery" id="frame-gallery">
               <div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading Video Frames...</div>
+            </div>
+          </div>
+
+          <!-- Bit-Plane Slicing Selector Toolbar -->
+          <div class="bitplane-selector-toolbar">
+            <div>
+              <strong><i class="fa-solid fa-layer-group text-cyan"></i> Active Bit-Plane Slicing:</strong>
+              <span class="text-secondary" style="font-size: 11px; margin-left: 6px;">Select active bit plane to visualize in 3rd card</span>
+            </div>
+            <div class="bitplane-buttons-group" id="bitplane-buttons-group">
+              <button class="bit-btn active" data-bit="0">Bit 0 (LSB - Carrier)</button>
+              <button class="bit-btn" data-bit="1">Bit 1</button>
+              <button class="bit-btn" data-bit="2">Bit 2</button>
+              <button class="bit-btn" data-bit="3">Bit 3</button>
+              <button class="bit-btn" data-bit="4">Bit 4</button>
+              <button class="bit-btn" data-bit="5">Bit 5</button>
+              <button class="bit-btn" data-bit="6">Bit 6</button>
+              <button class="bit-btn" data-bit="7">Bit 7 (MSB - Visual)</button>
             </div>
           </div>
 
@@ -389,7 +407,7 @@
               </div>
 
               <div class="inspect-card">
-                <div class="inspect-header">LSB 1st Bit-Plane Visualizer</div>
+                <div class="inspect-header" id="active-bitplane-header">Active Bit-Plane (Bit 0 LSB)</div>
                 <div class="inspect-img-box"><img id="inspect-lsb-img" src="" alt="LSB Bit Plane"></div>
               </div>
 
@@ -412,49 +430,61 @@
                 <h4><i class="fa-solid fa-microchip text-cyan"></i> Pixel-Level LSB Bit Substitution (Mathematical Demonstration)</h4>
                 <span class="tag tag-success">1-Bit LSB Embedding</span>
               </div>
-              <div class="pixel-channels-grid">
+              <div class="pixel-channels-grid" id="pixel-channels-grid">
                 <div class="channel-card red-channel">
                   <div class="channel-title">Red Channel (R)</div>
                   <div class="bit-row">
                     <span class="bit-label">Original:</span>
-                    <span class="bit-val">1011011<strong class="bit-orig">0</strong><sub>2</sub> (182)</span>
+                    <span class="bit-val" id="r-orig-val">1011011<strong class="bit-orig">0</strong><sub>2</sub> (182)</span>
                   </div>
-                  <div class="bit-op"><i class="fa-solid fa-arrow-down"></i> Embed Secret Bit <strong>1</strong></div>
+                  <div class="bit-op"><i class="fa-solid fa-arrow-down"></i> Embed Secret Bit <strong id="r-secret-bit">1</strong></div>
                   <div class="bit-row">
                     <span class="bit-label">Stego LSB:</span>
-                    <span class="bit-val">1011011<strong class="bit-mod">1</strong><sub>2</sub> (183)</span>
+                    <span class="bit-val" id="r-stego-val">1011011<strong class="bit-mod">1</strong><sub>2</sub> (183)</span>
                   </div>
-                  <div class="delta-tag">Intensity Delta: +1 (+0.39%)</div>
+                  <div class="delta-tag" id="r-delta-val">Intensity Delta: +1 (+0.39%)</div>
                 </div>
 
                 <div class="channel-card green-channel">
                   <div class="channel-title">Green Channel (G)</div>
                   <div class="bit-row">
                     <span class="bit-label">Original:</span>
-                    <span class="bit-val">1100100<strong class="bit-orig">1</strong><sub>2</sub> (201)</span>
+                    <span class="bit-val" id="g-orig-val">1100100<strong class="bit-orig">1</strong><sub>2</sub> (201)</span>
                   </div>
-                  <div class="bit-op"><i class="fa-solid fa-arrow-down"></i> Embed Secret Bit <strong>0</strong></div>
+                  <div class="bit-op"><i class="fa-solid fa-arrow-down"></i> Embed Secret Bit <strong id="g-secret-bit">0</strong></div>
                   <div class="bit-row">
                     <span class="bit-label">Stego LSB:</span>
-                    <span class="bit-val">1100100<strong class="bit-mod">0</strong><sub>2</sub> (200)</span>
+                    <span class="bit-val" id="g-stego-val">1100100<strong class="bit-mod">0</strong><sub>2</sub> (200)</span>
                   </div>
-                  <div class="delta-tag">Intensity Delta: -1 (-0.39%)</div>
+                  <div class="delta-tag" id="g-delta-val">Intensity Delta: -1 (-0.39%)</div>
                 </div>
 
                 <div class="channel-card blue-channel">
                   <div class="channel-title">Blue Channel (B)</div>
                   <div class="bit-row">
                     <span class="bit-label">Original:</span>
-                    <span class="bit-val">0110110<strong class="bit-orig">0</strong><sub>2</sub> (108)</span>
+                    <span class="bit-val" id="b-orig-val">0110110<strong class="bit-orig">0</strong><sub>2</sub> (108)</span>
                   </div>
-                  <div class="bit-op"><i class="fa-solid fa-arrow-down"></i> Embed Secret Bit <strong>1</strong></div>
+                  <div class="bit-op"><i class="fa-solid fa-arrow-down"></i> Embed Secret Bit <strong id="b-secret-bit">1</strong></div>
                   <div class="bit-row">
                     <span class="bit-label">Stego LSB:</span>
-                    <span class="bit-val">0110110<strong class="bit-mod">1</strong><sub>2</sub> (109)</span>
+                    <span class="bit-val" id="b-stego-val">0110110<strong class="bit-mod">1</strong><sub>2</sub> (109)</span>
                   </div>
-                  <div class="delta-tag">Intensity Delta: +1 (+0.39%)</div>
+                  <div class="delta-tag" id="b-delta-val">Intensity Delta: +1 (+0.39%)</div>
                 </div>
               </div>
+            </div>
+
+            <!-- Complete 8-Bit Plane Decomposition Grid -->
+            <div class="pixel-lsb-demo-box">
+              <div class="pixel-lsb-header">
+                <h4><i class="fa-solid fa-cubes text-cyan"></i> Complete 8-Bit Plane Decomposition (Bit 7 MSB down to Bit 0 LSB)</h4>
+                <span class="tag tag-accent">Full Bit Depth Slices</span>
+              </div>
+              <p class="section-desc" style="margin-bottom: 12px;">
+                Visual proof of bit significance: Bit 7 contains fundamental visual structure, while Bit 0 appears as high-entropy noise where secret data is concealed without visual penalty.
+              </p>
+              <div class="all-bitplanes-grid" id="all-bitplanes-grid"></div>
             </div>
 
           </div>

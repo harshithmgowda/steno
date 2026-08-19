@@ -62,7 +62,7 @@ class StegoPipelineEngine {
     packet[10] = (crc >>> 8) & 0xff;
     packet[11] = crc & 0xff;
 
-    // Payload
+    // Payload bytes
     packet.set(payloadBytes, 12);
 
     return { packet, dataLen, crc, payloadBytes };
@@ -157,12 +157,12 @@ class StegoPipelineEngine {
   }
 
   /**
-   * Main Embedding Pipeline: Supports Spatial LSB, 2D-DWT Wavelet, and Hybrid DWT+LSB.
+   * Main Embedding Pipeline: Supports 2D-DWT Wavelet, Spatial LSB, and Hybrid DWT+LSB.
    */
   static async embedPipeline({
     frames,
     secretText,
-    method = "dwt", // "lsb" | "dwt" | "hybrid"
+    method = "dwt", // "dwt" | "lsb" | "hybrid"
     bitsPerChannel = 1,
   }) {
     const { packet, dataLen, crc } = this.createPacket(secretText);
@@ -187,12 +187,11 @@ class StegoPipelineEngine {
       selectedIndices.push(frameIdx);
       framesAltered++;
 
-      if (method === "dwt" || method === "hybrid") {
-        // 2D-DWT Wavelet Embedding
-        // Extract channels
-        const rCh = new Float32Array(width * height);
-        const gCh = new Float32Array(width * height);
-        const bCh = new Float32Array(width * height);
+      if (method === "dwt") {
+        // 2D Integer Haar Wavelet Transform Embedding (Lossless Frequency Domain)
+        const rCh = new Uint8ClampedArray(width * height);
+        const gCh = new Uint8ClampedArray(width * height);
+        const bCh = new Uint8ClampedArray(width * height);
 
         for (let i = 0; i < width * height; i++) {
           rCh[i] = data[i * 4];
@@ -200,56 +199,43 @@ class StegoPipelineEngine {
           bCh[i] = data[i * 4 + 2];
         }
 
-        // Perform 2D-DWT on Green channel (highest visual acuity)
-        const dwtG = DWTEngine.dwt2D(gCh, width, height);
-        const dwtR = DWTEngine.dwt2D(rCh, width, height);
-        const dwtB = DWTEngine.dwt2D(bCh, width, height);
+        const dwtG = DWTEngine.integerDwt2D(gCh, width, height);
+        const dwtR = DWTEngine.integerDwt2D(rCh, width, height);
+        const dwtB = DWTEngine.integerDwt2D(bCh, width, height);
 
-        dwtSubbandsMap[frameIdx] = dwtG;
+        // Store floating DWT representation for visual inspector
+        dwtSubbandsMap[frameIdx] = DWTEngine.dwt2D(new Float32Array(gCh), width, height);
 
-        // Embed into High-Frequency Detail Subbands (HH and HL)
-        const subbandsToEmbed = [
-          { dwt: dwtG, channel: "G" },
-          { dwt: dwtR, channel: "R" },
-          { dwt: dwtB, channel: "B" }
-        ];
-
-        for (const item of subbandsToEmbed) {
+        // Embed bits into high-frequency detail subbands (HH and HL)
+        const subbands = [dwtG, dwtR, dwtB];
+        for (const dwt of subbands) {
           if (bitCursor >= totalBits) break;
-          const { HH, HL } = item.dwt;
-
-          // Embed in HH coefficients
-          for (let k = 0; k < HH.length; k++) {
+          // HH (Diagonal details)
+          for (let k = 0; k < dwt.HH.length; k++) {
             if (bitCursor >= totalBits) break;
             const bit = packetBits[bitCursor++];
-            // Wavelet coefficient LSB embedding
-            let val = Math.round(HH[k]);
-            val = (val & ~1) | bit;
-            HH[k] = val;
+            dwt.HH[k] = (dwt.HH[k] & ~1) | bit;
           }
-
-          // Embed in HL coefficients if still needed
-          for (let k = 0; k < HL.length; k++) {
+          // HL (Vertical details)
+          for (let k = 0; k < dwt.HL.length; k++) {
             if (bitCursor >= totalBits) break;
             const bit = packetBits[bitCursor++];
-            let val = Math.round(HL[k]);
-            val = (val & ~1) | bit;
-            HL[k] = val;
+            dwt.HL[k] = (dwt.HL[k] & ~1) | bit;
           }
         }
 
-        // Apply 2D-IDWT (Inverse DWT) to reconstruct spatial frame
-        const recG = DWTEngine.idwt2D(dwtG);
-        const recR = DWTEngine.idwt2D(dwtR);
-        const recB = DWTEngine.idwt2D(dwtB);
+        // Apply 2D Inverse Integer Wavelet Transform
+        const recG = DWTEngine.integerIdwt2D(dwtG);
+        const recR = DWTEngine.integerIdwt2D(dwtR);
+        const recB = DWTEngine.integerIdwt2D(dwtB);
 
         for (let i = 0; i < width * height; i++) {
-          data[i * 4] = Math.min(255, Math.max(0, Math.round(recR[i])));
-          data[i * 4 + 1] = Math.min(255, Math.max(0, Math.round(recG[i])));
-          data[i * 4 + 2] = Math.min(255, Math.max(0, Math.round(recB[i])));
+          data[i * 4] = recR[i];
+          data[i * 4 + 1] = recG[i];
+          data[i * 4 + 2] = recB[i];
         }
       } else {
-        // Spatial LSB Embedding
+        // Spatial LSB Mode or Hybrid Mode
         // Compute DWT on Green channel purely for wavelet inspector visualization
         const greenChannel = new Float32Array(width * height);
         for (let i = 0; i < width * height; i++) {
@@ -291,7 +277,7 @@ class StegoPipelineEngine {
   }
 
   /**
-   * Main Extraction Pipeline: Supports Spatial LSB and 2D-DWT Wavelet extraction.
+   * Main Extraction Pipeline: Supports 2D-DWT Wavelet and Spatial LSB extraction.
    */
   static async extractPipeline({
     stegoFrames,
@@ -299,7 +285,7 @@ class StegoPipelineEngine {
     bitsPerChannel = 1,
   }) {
     const extractedBits = [];
-    const HEADER_BITS = 12 * 8; // 96 bits = [4B Magic] + [4B Length] + [4B CRC32]
+    const HEADER_BITS = 12 * 8; // 96 bits = [4B Magic "STG\x01"] + [4B Length] + [4B CRC32]
     let expectedTotalBits = null;
     let expectedDataLen = null;
     let expectedCRC = null;
@@ -308,11 +294,11 @@ class StegoPipelineEngine {
       const frame = stegoFrames[frameIdx];
       const { width, height, data } = frame;
 
-      if (method === "dwt" || method === "hybrid") {
-        // 2D-DWT Extraction from detail subbands
-        const rCh = new Float32Array(width * height);
-        const gCh = new Float32Array(width * height);
-        const bCh = new Float32Array(width * height);
+      if (method === "dwt") {
+        // Extract from 2D Integer Wavelet detail subbands
+        const rCh = new Uint8ClampedArray(width * height);
+        const gCh = new Uint8ClampedArray(width * height);
+        const bCh = new Uint8ClampedArray(width * height);
 
         for (let i = 0; i < width * height; i++) {
           rCh[i] = data[i * 4];
@@ -320,18 +306,17 @@ class StegoPipelineEngine {
           bCh[i] = data[i * 4 + 2];
         }
 
-        const dwtG = DWTEngine.dwt2D(gCh, width, height);
-        const dwtR = DWTEngine.dwt2D(rCh, width, height);
-        const dwtB = DWTEngine.dwt2D(bCh, width, height);
+        const dwtG = DWTEngine.integerDwt2D(gCh, width, height);
+        const dwtR = DWTEngine.integerDwt2D(rCh, width, height);
+        const dwtB = DWTEngine.integerDwt2D(bCh, width, height);
 
-        const subbandsToRead = [dwtG, dwtR, dwtB];
+        const subbands = [dwtG, dwtR, dwtB];
 
-        for (const dwt of subbandsToRead) {
-          const { HH, HL } = dwt;
-          for (let k = 0; k < HH.length; k++) {
-            const val = Math.round(HH[k]);
-            extractedBits.push(Math.abs(val) & 1);
-            if (this._checkHeader(extractedBits, HEADER_BITS, expectedTotalBits) !== null && expectedTotalBits === null) {
+        for (const dwt of subbands) {
+          // Read HH
+          for (let k = 0; k < dwt.HH.length; k++) {
+            extractedBits.push(dwt.HH[k] & 1);
+            if (expectedTotalBits === null && extractedBits.length >= HEADER_BITS) {
               const res = this._parseHeader(extractedBits);
               if (res) {
                 expectedDataLen = res.dataLen;
@@ -343,10 +328,10 @@ class StegoPipelineEngine {
           }
           if (expectedTotalBits !== null && extractedBits.length >= expectedTotalBits) break;
 
-          for (let k = 0; k < HL.length; k++) {
-            const val = Math.round(HL[k]);
-            extractedBits.push(Math.abs(val) & 1);
-            if (this._checkHeader(extractedBits, HEADER_BITS, expectedTotalBits) !== null && expectedTotalBits === null) {
+          // Read HL
+          for (let k = 0; k < dwt.HL.length; k++) {
+            extractedBits.push(dwt.HL[k] & 1);
+            if (expectedTotalBits === null && extractedBits.length >= HEADER_BITS) {
               const res = this._parseHeader(extractedBits);
               if (res) {
                 expectedDataLen = res.dataLen;
@@ -359,7 +344,7 @@ class StegoPipelineEngine {
           if (expectedTotalBits !== null && extractedBits.length >= expectedTotalBits) break;
         }
       } else {
-        // Spatial LSB Extraction
+        // Spatial LSB extraction
         for (let i = 0; i < data.length; i += 4) {
           for (let c = 0; c < 3; c++) {
             if (bitsPerChannel === 1) {
@@ -369,7 +354,7 @@ class StegoPipelineEngine {
               extractedBits.push(data[i + c] & 1);
             }
 
-            if (extractedBits.length === HEADER_BITS && expectedTotalBits === null) {
+            if (expectedTotalBits === null && extractedBits.length >= HEADER_BITS) {
               const res = this._parseHeader(extractedBits);
               if (res) {
                 expectedDataLen = res.dataLen;
@@ -389,7 +374,7 @@ class StegoPipelineEngine {
     if (extractedBits.length < HEADER_BITS) {
       return {
         success: false,
-        error: "Insufficient data: Stego packet header could not be recovered.",
+        error: "Insufficient carrier data: Packet header could not be recovered.",
       };
     }
 
@@ -397,9 +382,8 @@ class StegoPipelineEngine {
       expectedTotalBits ? extractedBits.slice(0, expectedTotalBits) : extractedBits
     );
 
-    // Verify Magic Header
+    // Verify Magic Header (0x53, 0x54, 0x47, 0x01 = "STG\x01")
     if (fullPacket[0] !== 0x53 || fullPacket[1] !== 0x54 || fullPacket[2] !== 0x47 || fullPacket[3] !== 0x01) {
-      // Fallback try raw UTF-8 decode
       const decoder = new TextDecoder("utf-8", { fatal: false });
       const rawText = decoder.decode(fullPacket);
       return {
@@ -428,11 +412,6 @@ class StegoPipelineEngine {
       embeddedCrc,
       integrityMessage: crcMatches ? "CRC32 Integrity 100% Validated (Lossless)" : "CRC32 Checksum Mismatch",
     };
-  }
-
-  static _checkHeader(bits, headerLen, expectedTotal) {
-    if (bits.length >= headerLen && expectedTotal === null) return true;
-    return null;
   }
 
   static _parseHeader(bits) {
