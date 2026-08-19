@@ -11,7 +11,8 @@ import base64
 import json
 import numpy as np
 import cv2
-from flask import Flask, render_template, request, jsonify
+import tempfile
+from flask import Flask, render_template, request, jsonify, send_file
 
 from src.frame_selector import AdaptiveFrameSelector
 from src.lsb_core import LSBStegoEngine
@@ -254,6 +255,87 @@ def extract_payload():
             return jsonify({
                 "status": "error",
                 "message": meta.get("message", "Extraction failed: Header or CRC checksum mismatch.")
+            }), 400
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/download-stego-video", methods=["GET"])
+def download_stego_video():
+    """Generates and streams the stego video file for download."""
+    try:
+        stego_frames = SESSION_STORAGE.get("stego_frames", [])
+        if not stego_frames:
+            return jsonify({"status": "error", "message": "No stego frames found in session."}), 400
+
+        fps = SESSION_STORAGE.get("fps", 24.0)
+        temp_dir = tempfile.gettempdir()
+        output_path = os.path.join(temp_dir, "stego_video_output.mp4")
+
+        VideoHandler.save_video_frames(stego_frames, output_path, fps=fps)
+
+        return send_file(
+            output_path,
+            as_attachment=True,
+            download_name="stego_carrier_video.mp4",
+            mimetype="video/mp4"
+        )
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/upload-extract", methods=["POST"])
+def upload_and_extract():
+    """Extracts secret payload from an uploaded external stego video file."""
+    try:
+        if "file" not in request.files:
+            return jsonify({"status": "error", "message": "No file uploaded."}), 400
+
+        file = request.files["file"]
+        if file.filename == "":
+            return jsonify({"status": "error", "message": "Empty file name."}), 400
+
+        temp_dir = tempfile.gettempdir()
+        temp_path = os.path.join(temp_dir, f"upload_{file.filename}")
+        file.save(temp_path)
+
+        frames, fps = VideoHandler.load_video_frames(temp_path, max_frames=60)
+        if not frames:
+            return jsonify({"status": "error", "message": "Could not decode frames from video."}), 400
+
+        strategies = ["hybrid", "lsb", "dwt"]
+        extracted_data = None
+
+        for strat in strategies:
+            for bpc in [1, 2]:
+                selector = AdaptiveFrameSelector(default_strategy=strat)
+                selected_indices, _ = selector.select_frames(frames, selection_ratio=0.35, strategy=strat, min_frames=2)
+                engine = LSBStegoEngine(bits_per_channel=bpc)
+                res, meta = engine.extract(frames, selected_indices)
+                if res is not None and meta.get("crc_verified", False):
+                    extracted_data = (res, meta, strat, bpc, selected_indices)
+                    break
+            if extracted_data:
+                break
+
+        if extracted_data:
+            res_bytes, meta, strat, bpc, sel_idx = extracted_data
+            recovered_text = res_bytes.decode("utf-8", errors="replace")
+            return jsonify({
+                "status": "success",
+                "recovered_text": recovered_text,
+                "payload_bytes": len(res_bytes),
+                "crc_verified": True,
+                "strategy": strat,
+                "bits_per_channel": bpc,
+                "total_frames": len(frames),
+                "selected_indices": sel_idx,
+                "integrity_message": "CRC32 Integrity 100% Validated (Lossless)"
+            })
+        else:
+            return jsonify({
+                "status": "error",
+                "message": "Stego signature or CRC mismatch. Could not extract secret payload from uploaded video."
             }), 400
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500

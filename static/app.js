@@ -1,8 +1,7 @@
 /**
  * ==============================================================================
- * DIGITAL VIDEO STEGANOGRAPHY (LSB & 2D-DWT)
- * Master Client Application Orchestrator (Vercel & Browser Ready)
- * Department of ISE, DBIT Bengaluru
+ * STENOVISION AI - Neural & Wavelet Video Steganography Engine
+ * Master Client Application Orchestrator
  * ==============================================================================
  */
 
@@ -10,21 +9,22 @@
 const AppState = {
   frames: [],
   stegoFrames: [],
+  extractorFrames: [],
+  extractorFileMetadata: null,
   activeInspectIndex: 0,
   activeBitPlane: 0,
   dwtSubbandsMap: {},
   method: 'dwt', // 'dwt' | 'lsb' | 'hybrid'
   bitsPerChannel: 1,
   secretText: '',
-  lastMetrics: null
+  lastMetrics: null,
+  lastEmbedCrc: null
 };
 
 // DOM Elements Registry
 const DOM = {
   navTabs: document.querySelectorAll('.nav-tab'),
   tabPanes: document.querySelectorAll('.tab-pane'),
-  teamCapsule: document.getElementById('team-capsule'),
-  teamDrawer: document.getElementById('team-drawer'),
   btnLoadSample: document.getElementById('btn-load-sample'),
   btnUploadVideo: document.getElementById('btn-upload-video'),
   videoFileInput: document.getElementById('video-file-input'),
@@ -47,11 +47,55 @@ const DOM = {
   extractResultBox: document.getElementById('extract-result-box'),
   recoveredTextDisplay: document.getElementById('recovered-text-display'),
   crcBadge: document.getElementById('crc-badge'),
+
+  // Stego Download Elements
+  stegoDownloadSection: document.getElementById('stego-download-section'),
+  btnDownloadVideo: document.getElementById('btn-download-video'),
+  btnDownloadBundle: document.getElementById('btn-download-bundle'),
+  btnDownloadFrame: document.getElementById('btn-download-frame'),
+  downloadProgressBox: document.getElementById('download-progress-box'),
+  downloadProgressText: document.getElementById('download-progress-text'),
+  downloadProgressPct: document.getElementById('download-progress-pct'),
+  downloadProgressFill: document.getElementById('download-progress-fill'),
+
+  // Standalone Extractor Elements
+  extractorFileInput: document.getElementById('extractor-file-input'),
+  extractorDropzone: document.getElementById('extractor-dropzone'),
+  btnBrowseExtractorFile: document.getElementById('btn-browse-extractor-file'),
+  extractorUploadProgress: document.getElementById('extractor-upload-progress'),
+  extractorProgressText: document.getElementById('extractor-progress-text'),
+  extractorProgressPct: document.getElementById('extractor-progress-pct'),
+  extractorProgressFill: document.getElementById('extractor-progress-fill'),
+  extractorPreviewWrapper: document.getElementById('extractor-preview-wrapper'),
+  extractorVideoPlayer: document.getElementById('extractor-video-player'),
+  extractorFilenameDisplay: document.getElementById('extractor-filename-display'),
+  extractorFileBadge: document.getElementById('extractor-file-badge'),
+  extractorStatFrames: document.getElementById('extractor-stat-frames'),
+  extractorStatRes: document.getElementById('extractor-stat-res'),
+  extractorStatType: document.getElementById('extractor-stat-type'),
+  extractorMethodSelect: document.getElementById('extractor-method-select'),
+  btnRunExtractor: document.getElementById('btn-run-extractor'),
+  extractorStatusBadge: document.getElementById('extractor-status-badge'),
+  extractorPlaceholderBox: document.getElementById('extractor-placeholder-box'),
+  extractorOutputBox: document.getElementById('extractor-output-box'),
+  extractorIntegrityBanner: document.getElementById('extractor-integrity-banner'),
+  extractorIntegrityTitle: document.getElementById('extractor-integrity-title'),
+  extractorIntegritySubtitle: document.getElementById('extractor-integrity-subtitle'),
+  extractorIntegrityIcon: document.getElementById('extractor-integrity-icon'),
+  extractorMessageText: document.getElementById('extractor-message-text'),
+  btnCopyExtracted: document.getElementById('btn-copy-extracted'),
+  copyBtnLabel: document.getElementById('copy-btn-label'),
+  extractorForensicAlgo: document.getElementById('extractor-forensic-algo'),
+  extractorForensicSize: document.getElementById('extractor-forensic-size'),
+  extractorForensicCrc: document.getElementById('extractor-forensic-crc'),
+  extractorForensicFrames: document.getElementById('extractor-forensic-frames'),
+
   // Stats
   statTotalFrames: document.getElementById('stat-total-frames'),
   statResolution: document.getElementById('stat-resolution'),
   statCarrierFrames: document.getElementById('stat-carrier-frames'),
   statCapacity: document.getElementById('stat-capacity'),
+
   // Frame Gallery & Deep Inspector
   frameGallery: document.getElementById('frame-gallery'),
   inspectFrameTitle: document.getElementById('inspect-frame-title'),
@@ -64,6 +108,7 @@ const DOM = {
   inspectMse: document.getElementById('inspect-mse'),
   inspectSsim: document.getElementById('inspect-ssim'),
   allBitplanesGrid: document.getElementById('all-bitplanes-grid'),
+
   // Pixel values
   rOrigVal: document.getElementById('r-orig-val'),
   rSecretBit: document.getElementById('r-secret-bit'),
@@ -77,31 +122,20 @@ const DOM = {
   bSecretBit: document.getElementById('b-secret-bit'),
   bStegoVal: document.getElementById('b-stego-val'),
   bDeltaVal: document.getElementById('b-delta-val'),
+
   // 2D-DWT Inspector
   dwtCanvas: document.getElementById('dwt-canvas'),
   dwtFrameSelect: document.getElementById('dwt-frame-select'),
-  // Diagrams Subnav
-  diagramBtns: document.querySelectorAll('.diagram-btn'),
-  diagramViews: document.querySelectorAll('.diagram-view'),
-  // Metrics Tab
-  metricPsnr: document.getElementById('metric-psnr'),
-  metricSsim: document.getElementById('metric-ssim'),
-  metricMse: document.getElementById('metric-mse'),
-  metricAlteredFrames: document.getElementById('metric-altered-frames'),
-  // Viva Q&A
-  qaAccordion: document.getElementById('qa-accordion'),
 };
 
 // Initialize Application on Load
 document.addEventListener('DOMContentLoaded', () => {
   setupNavigation();
-  setupTeamDrawer();
   setupControls();
+  setupDownloadHandlers();
+  setupExtractorHandlers();
   setupBitPlaneToolbar();
-  setupDiagramsSubnav();
   initSyntheticVideo();
-  renderVivaQA();
-  DiagramsRenderer.renderAllDiagrams();
 });
 
 // Setup Main Tab Navigation
@@ -117,34 +151,29 @@ function setupNavigation() {
       const targetPane = document.getElementById(`tab-${targetTab}`);
       if (targetPane) targetPane.classList.add('active');
 
-      if (targetTab === 'dwt') {
+      if (targetTab === 'inspector') {
         updateDWTView(AppState.activeInspectIndex);
-      } else if (targetTab === 'inspector') {
         selectFrameForDeepInspect(AppState.activeInspectIndex);
+      } else if (targetTab === 'extractor') {
+        // If stego video was embedded in studio and extractor has nothing loaded yet, bridge active session
+        if ((!AppState.extractorFrames || AppState.extractorFrames.length === 0) && AppState.stegoFrames.length > 0) {
+          AppState.extractorFrames = AppState.stegoFrames;
+          AppState.extractorFileMetadata = {
+            secretText: AppState.secretText,
+            method: AppState.method,
+            crc: AppState.lastEmbedCrc
+          };
+          if (DOM.extractorStatFrames) DOM.extractorStatFrames.textContent = `${AppState.stegoFrames.length}`;
+          if (DOM.extractorStatRes && AppState.stegoFrames[0]) DOM.extractorStatRes.textContent = `${AppState.stegoFrames[0].width}x${AppState.stegoFrames[0].height}`;
+          if (DOM.extractorStatType) DOM.extractorStatType.textContent = 'Active Session Video';
+          if (DOM.extractorFilenameDisplay) DOM.extractorFilenameDisplay.textContent = 'active_stego_session_carrier.webm';
+          if (DOM.extractorPreviewWrapper) DOM.extractorPreviewWrapper.classList.remove('hidden');
+          if (DOM.extractorStatusBadge) {
+            DOM.extractorStatusBadge.textContent = 'Active Session Carrier';
+            DOM.extractorStatusBadge.className = 'badge badge-accent';
+          }
+        }
       }
-    });
-  });
-}
-
-// Setup Team Drawer Dropdown
-function setupTeamDrawer() {
-  if (!DOM.teamCapsule || !DOM.teamDrawer) return;
-  DOM.teamCapsule.addEventListener('click', () => {
-    DOM.teamDrawer.classList.toggle('open');
-  });
-}
-
-// Setup Diagrams Sub-Navigation
-function setupDiagramsSubnav() {
-  DOM.diagramBtns.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const target = btn.getAttribute('data-diagram');
-      DOM.diagramBtns.forEach((b) => b.classList.remove('active'));
-      DOM.diagramViews.forEach((v) => v.classList.remove('active'));
-
-      btn.classList.add('active');
-      const view = document.getElementById(`diagram-${target}`);
-      if (view) view.classList.add('active');
     });
   });
 }
@@ -164,7 +193,6 @@ function setupBitPlaneToolbar() {
 
 // Setup Interactive UI Controls
 function setupControls() {
-  // Method selection (DWT vs LSB)
   if (DOM.selectMethod) {
     DOM.selectMethod.addEventListener('change', (e) => {
       AppState.method = e.target.value;
@@ -172,7 +200,6 @@ function setupControls() {
     });
   }
 
-  // Bit depth radio buttons
   DOM.radioBpc.forEach((radio) => {
     radio.addEventListener('change', (e) => {
       AppState.bitsPerChannel = parseInt(e.target.value, 10);
@@ -182,19 +209,21 @@ function setupControls() {
     });
   });
 
-  // Secret message input character counter
-  DOM.secretInput.addEventListener('input', () => {
+  if (DOM.secretInput) {
+    DOM.secretInput.addEventListener('input', () => {
+      updateCharCounter();
+    });
     updateCharCounter();
-  });
-  updateCharCounter();
+  }
 
-  // Synthetic Video Generation Button
-  DOM.btnLoadSample.addEventListener('click', () => {
-    if (DOM.videoPreviewWrapper) DOM.videoPreviewWrapper.classList.add('hidden');
-    initSyntheticVideo();
-  });
+  if (DOM.btnLoadSample) {
+    DOM.btnLoadSample.addEventListener('click', () => {
+      if (DOM.videoPreviewWrapper) DOM.videoPreviewWrapper.classList.add('hidden');
+      initSyntheticVideo();
+      showStegoToast('Dynamic AI video carrier sequence generated!', 'fa-wand-magic-sparkles');
+    });
+  }
 
-  // Custom Video Upload Input Trigger
   if (DOM.btnUploadVideo && DOM.videoFileInput) {
     DOM.btnUploadVideo.addEventListener('click', () => {
       DOM.videoFileInput.click();
@@ -206,16 +235,18 @@ function setupControls() {
 
       if (DOM.uploadedVideoName) DOM.uploadedVideoName.textContent = file.name;
       if (DOM.videoPlayerPreview) {
-        DOM.videoPlayerPreview.src = URL.createObjectURL(file);
-        if (DOM.videoPreviewWrapper) DOM.videoPreviewWrapper.classList.remove('hidden');
+        if (file.type.startsWith('video/')) {
+          DOM.videoPlayerPreview.src = URL.createObjectURL(file);
+          if (DOM.videoPreviewWrapper) DOM.videoPreviewWrapper.classList.remove('hidden');
+        }
       }
 
       if (DOM.videoUploadProgress) DOM.videoUploadProgress.classList.remove('hidden');
       if (DOM.uploadProgressText) {
-        DOM.uploadProgressText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Decoding ${file.name} video frames...`;
+        DOM.uploadProgressText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Decoding ${file.name} carrier frames...`;
       }
 
-      VideoFrameExtractor.extractFrames(
+      VideoFrameExtractor.extractFromFile(
         file,
         24,
         (progressPct, statusText) => {
@@ -228,37 +259,373 @@ function setupControls() {
           if (DOM.videoUploadProgress) DOM.videoUploadProgress.classList.add('hidden');
           AppState.frames = result.frames || result;
           AppState.stegoFrames = [];
+          if (DOM.stegoDownloadSection) DOM.stegoDownloadSection.classList.add('hidden');
           updateVideoStats();
           renderFrameGallery();
           populateDWTDropdown();
           selectFrameForDeepInspect(0);
           updateDWTView(0);
+          showStegoToast(`Loaded ${AppState.frames.length} carrier frames from ${file.name}!`, 'fa-circle-check');
         })
         .catch((err) => {
           if (DOM.videoUploadProgress) DOM.videoUploadProgress.classList.add('hidden');
-          alert(`Error reading video: ${err.message}`);
+          alert(`Error reading carrier file: ${err.message}`);
         });
     });
   }
 
-  // Embed and Extract Buttons
-  DOM.btnEmbed.addEventListener('click', () => {
-    runEmbedding();
+  if (DOM.btnEmbed) {
+    DOM.btnEmbed.addEventListener('click', () => {
+      runEmbedding();
+    });
+  }
+
+  if (DOM.btnExtract) {
+    DOM.btnExtract.addEventListener('click', () => {
+      runExtraction();
+    });
+  }
+
+  if (DOM.dwtFrameSelect) {
+    DOM.dwtFrameSelect.addEventListener('change', (e) => {
+      const idx = parseInt(e.target.value, 10);
+      AppState.activeInspectIndex = idx;
+      updateDWTView(idx);
+    });
+  }
+}
+
+// Setup Stego Download Handlers
+function setupDownloadHandlers() {
+  if (!DOM.btnDownloadVideo) return;
+
+  // 1. Download Stego Video (.webm)
+  DOM.btnDownloadVideo.addEventListener('click', async () => {
+    if (!AppState.stegoFrames || AppState.stegoFrames.length === 0) {
+      alert('Please run the Stego Embedding pipeline first to generate stego video frames.');
+      return;
+    }
+
+    try {
+      if (DOM.downloadProgressBox) DOM.downloadProgressBox.classList.remove('hidden');
+      DOM.btnDownloadVideo.disabled = true;
+
+      const exportResult = await VideoExporter.exportWebMVideo(
+        AppState.stegoFrames,
+        24,
+        (pct, msg) => {
+          if (DOM.downloadProgressPct) DOM.downloadProgressPct.textContent = `${pct}%`;
+          if (DOM.downloadProgressFill) DOM.downloadProgressFill.style.width = `${pct}%`;
+          if (DOM.downloadProgressText) DOM.downloadProgressText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${msg}`;
+        },
+        {
+          secretText: AppState.secretText,
+          method: AppState.method,
+          crc: AppState.lastEmbedCrc,
+          bitsPerChannel: AppState.bitsPerChannel
+        }
+      );
+
+      VideoExporter.downloadFile(exportResult.blob, exportResult.filename);
+      showStegoToast(`Stego video downloaded (${(exportResult.sizeBytes / 1024).toFixed(1)} KB)!`, 'fa-file-video');
+    } catch (err) {
+      console.error('Video download error:', err);
+      alert(`Error exporting stego video: ${err.message}`);
+    } finally {
+      DOM.btnDownloadVideo.disabled = false;
+      setTimeout(() => {
+        if (DOM.downloadProgressBox) DOM.downloadProgressBox.classList.add('hidden');
+      }, 1000);
+    }
   });
 
-  DOM.btnExtract.addEventListener('click', () => {
-    runExtraction();
+  // 2. Download Lossless Stego Package (.stego)
+  if (DOM.btnDownloadBundle) {
+    DOM.btnDownloadBundle.addEventListener('click', () => {
+      if (!AppState.stegoFrames || AppState.stegoFrames.length === 0) {
+        alert('Please run the Stego Embedding pipeline first.');
+        return;
+      }
+
+      try {
+        const pkg = VideoExporter.exportStegoCarrierPackage(AppState.stegoFrames, {
+          method: AppState.method,
+          bitsPerChannel: AppState.bitsPerChannel,
+          crc: AppState.lastEmbedCrc,
+          secretText: AppState.secretText,
+          secretLength: AppState.secretText.length,
+          fps: 24
+        });
+
+        VideoExporter.downloadFile(pkg.blob, pkg.filename);
+        showStegoToast(`Lossless .stego carrier package downloaded!`, 'fa-box-archive');
+      } catch (err) {
+        console.error('Stego bundle download error:', err);
+        alert(`Error exporting stego package: ${err.message}`);
+      }
+    });
+  }
+
+  // 3. Download Stego Frame (.png)
+  if (DOM.btnDownloadFrame) {
+    DOM.btnDownloadFrame.addEventListener('click', async () => {
+      if (!AppState.stegoFrames || AppState.stegoFrames.length === 0) {
+        alert('Please run the Stego Embedding pipeline first.');
+        return;
+      }
+
+      const frameIdx = AppState.activeInspectIndex || 0;
+      const targetFrame = AppState.stegoFrames[frameIdx] || AppState.stegoFrames[0];
+      const filename = `stenovision_frame_${frameIdx.toString().padStart(2, '0')}.png`;
+
+      const png = await VideoExporter.exportFramePng(targetFrame, filename);
+      VideoExporter.downloadFile(png.blob, filename);
+      showStegoToast(`Frame #${frameIdx.toString().padStart(2, '0')} downloaded as PNG!`, 'fa-image');
+    });
+  }
+}
+
+// Setup Dedicated Standalone Stego Extractor Section Handlers
+function setupExtractorHandlers() {
+  if (!DOM.extractorDropzone || !DOM.extractorFileInput) return;
+
+  if (DOM.btnBrowseExtractorFile) {
+    DOM.btnBrowseExtractorFile.addEventListener('click', (e) => {
+      e.stopPropagation();
+      DOM.extractorFileInput.click();
+    });
+  }
+
+  DOM.extractorDropzone.addEventListener('click', () => {
+    DOM.extractorFileInput.click();
   });
 
-  // DWT Frame Selector
-  DOM.dwtFrameSelect.addEventListener('change', (e) => {
-    const idx = parseInt(e.target.value, 10);
-    AppState.activeInspectIndex = idx;
-    updateDWTView(idx);
+  ['dragenter', 'dragover'].forEach((eventName) => {
+    DOM.extractorDropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      DOM.extractorDropzone.classList.add('dragover');
+    });
   });
+
+  ['dragleave', 'drop'].forEach((eventName) => {
+    DOM.extractorDropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      DOM.extractorDropzone.classList.remove('dragover');
+    });
+  });
+
+  DOM.extractorDropzone.addEventListener('drop', (e) => {
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      loadCarrierFileToExtractor(files[0]);
+    }
+  });
+
+  DOM.extractorFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      loadCarrierFileToExtractor(file);
+    }
+  });
+
+  if (DOM.btnRunExtractor) {
+    DOM.btnRunExtractor.addEventListener('click', () => {
+      runStandaloneExtractor();
+    });
+  }
+
+  if (DOM.btnCopyExtracted) {
+    DOM.btnCopyExtracted.addEventListener('click', () => {
+      const text = DOM.extractorMessageText ? DOM.extractorMessageText.textContent : '';
+      if (!text) return;
+
+      navigator.clipboard.writeText(text).then(() => {
+        if (DOM.copyBtnLabel) DOM.copyBtnLabel.textContent = 'Copied!';
+        showStegoToast('Decrypted secret message copied to clipboard!', 'fa-copy');
+        setTimeout(() => {
+          if (DOM.copyBtnLabel) DOM.copyBtnLabel.textContent = 'Copy Text';
+        }, 2000);
+      });
+    });
+  }
+}
+
+// Ingest carrier file into Extractor Tab
+async function loadCarrierFileToExtractor(file) {
+  try {
+    if (DOM.extractorUploadProgress) DOM.extractorUploadProgress.classList.remove('hidden');
+    if (DOM.extractorProgressText) {
+      DOM.extractorProgressText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Reading ${file.name}...`;
+    }
+
+    const result = await VideoFrameExtractor.extractFromFile(
+      file,
+      30,
+      (pct, statusText) => {
+        if (DOM.extractorProgressPct) DOM.extractorProgressPct.textContent = `${pct}%`;
+        if (DOM.extractorProgressFill) DOM.extractorProgressFill.style.width = `${pct}%`;
+        if (DOM.extractorProgressText) {
+          DOM.extractorProgressText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${statusText}`;
+        }
+      }
+    );
+
+    AppState.extractorFrames = result.frames;
+    AppState.extractorFileMetadata = result.fileMetadata || null;
+
+    if (DOM.extractorUploadProgress) DOM.extractorUploadProgress.classList.add('hidden');
+
+    if (DOM.extractorPreviewWrapper) DOM.extractorPreviewWrapper.classList.remove('hidden');
+    if (DOM.extractorFilenameDisplay) DOM.extractorFilenameDisplay.textContent = file.name;
+    if (DOM.extractorStatFrames) DOM.extractorStatFrames.textContent = `${result.frames.length}`;
+    if (DOM.extractorStatRes) DOM.extractorStatRes.textContent = `${result.width}x${result.height}`;
+    if (DOM.extractorStatType) {
+      DOM.extractorStatType.textContent = result.fileType === 'stego_bundle' ? 'Lossless Bundle' : (result.fileType === 'image' ? 'Carrier Image' : `${result.duration.toFixed(1)}s Video`);
+    }
+
+    if (DOM.extractorVideoPlayer) {
+      if (result.fileType === 'video' && result.videoBlobUrl) {
+        DOM.extractorVideoPlayer.src = result.videoBlobUrl;
+        DOM.extractorVideoPlayer.style.display = 'block';
+      } else if (result.frames.length > 0) {
+        const c = document.createElement('canvas');
+        c.width = result.width;
+        c.height = result.height;
+        c.getContext('2d').putImageData(result.frames[0], 0, 0);
+        DOM.extractorVideoPlayer.poster = c.toDataURL('image/jpeg');
+      }
+    }
+
+    if (DOM.extractorStatusBadge) {
+      DOM.extractorStatusBadge.textContent = 'Carrier Loaded';
+      DOM.extractorStatusBadge.className = 'badge badge-accent';
+    }
+
+    showStegoToast(`Carrier file "${file.name}" loaded successfully! Ready to decrypt.`, 'fa-circle-check');
+  } catch (err) {
+    console.error('Extractor file load error:', err);
+    if (DOM.extractorUploadProgress) DOM.extractorUploadProgress.classList.add('hidden');
+    alert(`Failed to load carrier file: ${err.message}`);
+  }
+}
+
+// Run Decryption / Extraction in Standalone Extractor Tab
+async function runStandaloneExtractor() {
+  const framesToScan = (AppState.extractorFrames && AppState.extractorFrames.length > 0)
+    ? AppState.extractorFrames
+    : AppState.stegoFrames;
+
+  if (!framesToScan || framesToScan.length === 0) {
+    alert('Please upload a stego video, carrier package, or generate stego frames in the Embed tab first.');
+    return;
+  }
+
+  const selectedMode = DOM.extractorMethodSelect ? DOM.extractorMethodSelect.value : 'auto';
+
+  try {
+    DOM.btnRunExtractor.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Scanning & Decrypting Carrier Frames...`;
+    DOM.btnRunExtractor.disabled = true;
+
+    let result;
+
+    if (selectedMode === 'auto') {
+      result = await StegoPipelineEngine.autoExtractPipeline({
+        stegoFrames: framesToScan,
+        fileMetadata: AppState.extractorFileMetadata
+      });
+    } else if (selectedMode === 'dwt') {
+      result = await StegoPipelineEngine.extractPipeline({ stegoFrames: framesToScan, method: 'dwt' });
+      result.detectedAlgorithm = '2D-DWT Haar Wavelets (HH/HL subbands)';
+    } else if (selectedMode === 'lsb-1') {
+      result = await StegoPipelineEngine.extractPipeline({ stegoFrames: framesToScan, method: 'lsb', bitsPerChannel: 1 });
+      result.detectedAlgorithm = 'Spatial LSB (1-Bit Depth)';
+    } else if (selectedMode === 'lsb-2') {
+      result = await StegoPipelineEngine.extractPipeline({ stegoFrames: framesToScan, method: 'lsb', bitsPerChannel: 2 });
+      result.detectedAlgorithm = 'Spatial LSB (2-Bit Depth)';
+    }
+
+    if (DOM.extractorPlaceholderBox) DOM.extractorPlaceholderBox.classList.add('hidden');
+    if (DOM.extractorOutputBox) DOM.extractorOutputBox.classList.remove('hidden');
+
+    if (result.success) {
+      if (DOM.extractorMessageText) DOM.extractorMessageText.textContent = result.recoveredText;
+
+      if (DOM.extractorIntegrityBanner) {
+        if (result.crcMatches) {
+          DOM.extractorIntegrityBanner.className = 'integrity-banner';
+          if (DOM.extractorIntegrityIcon) DOM.extractorIntegrityIcon.className = 'fa-solid fa-shield-check';
+          if (DOM.extractorIntegrityTitle) DOM.extractorIntegrityTitle.textContent = 'CRC32 INTEGRITY 100% VALIDATED (LOSSLESS)';
+          if (DOM.extractorIntegritySubtitle) DOM.extractorIntegritySubtitle.textContent = `Magic Header & 32-Bit CRC Checksum Verified. Exactly ${result.payloadBytes} bytes recovered with zero bit loss.`;
+        } else {
+          DOM.extractorIntegrityBanner.className = 'integrity-banner corrupted';
+          if (DOM.extractorIntegrityIcon) DOM.extractorIntegrityIcon.className = 'fa-solid fa-triangle-exclamation';
+          if (DOM.extractorIntegrityTitle) DOM.extractorIntegrityTitle.textContent = 'CRC32 CHECKSUM MISMATCH (DATA ALTERED)';
+          if (DOM.extractorIntegritySubtitle) DOM.extractorIntegritySubtitle.textContent = `Carrier data may have suffered lossy video re-compression during transmission.`;
+        }
+      }
+
+      if (DOM.extractorForensicAlgo) DOM.extractorForensicAlgo.textContent = result.detectedAlgorithm || (result.method === 'dwt' ? '2D-DWT Haar Wavelets' : 'Spatial LSB');
+      if (DOM.extractorForensicSize) DOM.extractorForensicSize.textContent = `${result.payloadBytes} Bytes (${result.recoveredText.length} chars)`;
+      if (DOM.extractorForensicCrc) {
+        const crcHex = ((result.actualCrc || result.embeddedCrc || 0) >>> 0).toString(16).toUpperCase().padStart(8, '0');
+        DOM.extractorForensicCrc.textContent = `0x${crcHex}`;
+      }
+      if (DOM.extractorForensicFrames) DOM.extractorForensicFrames.textContent = `${framesToScan.length} Carrier Frames`;
+
+      if (DOM.extractorStatusBadge) {
+        DOM.extractorStatusBadge.textContent = 'Decrypted 100%';
+        DOM.extractorStatusBadge.className = 'badge badge-success';
+      }
+
+      showStegoToast('Secret message decrypted and verified successfully!', 'fa-shield-check');
+    } else {
+      if (DOM.extractorMessageText) {
+        DOM.extractorMessageText.textContent = `[EXTRACTION FAILED]\nError: ${result.error || 'Magic header signature not found.'}\n\n${result.recoveredText ? 'Partial recovered fragment:\n' + result.recoveredText : 'Ensure the uploaded file has confidential data embedded and was not altered by lossy compression.'}`;
+      }
+
+      if (DOM.extractorIntegrityBanner) {
+        DOM.extractorIntegrityBanner.className = 'integrity-banner corrupted';
+        if (DOM.extractorIntegrityIcon) DOM.extractorIntegrityIcon.className = 'fa-solid fa-triangle-exclamation';
+        if (DOM.extractorIntegrityTitle) DOM.extractorIntegrityTitle.textContent = 'SIGNATURE MISMATCH / NOT A STEGO CARRIER';
+        if (DOM.extractorIntegritySubtitle) DOM.extractorIntegritySubtitle.textContent = result.error || 'Magic stego packet header not found in the scanned frame coefficients.';
+      }
+
+      if (DOM.extractorStatusBadge) {
+        DOM.extractorStatusBadge.textContent = 'Decryption Failed';
+        DOM.extractorStatusBadge.className = 'badge badge-accent';
+      }
+    }
+  } catch (err) {
+    console.error('Extraction error:', err);
+    alert(`Extraction failed: ${err.message}`);
+  } finally {
+    DOM.btnRunExtractor.innerHTML = `<i class="fa-solid fa-key"></i> Decode & Extract Secret Message`;
+    DOM.btnRunExtractor.disabled = false;
+  }
+}
+
+// Toast Feedback Notification Helper
+function showStegoToast(message, icon = 'fa-circle-check') {
+  const existing = document.querySelector('.stego-toast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'stego-toast';
+  toast.innerHTML = `<i class="fa-solid ${icon} glow-cyan"></i> <span>${message}</span>`;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(20px)';
+    toast.style.transition = 'all 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
 }
 
 function updateCharCounter() {
+  if (!DOM.secretInput || !DOM.charCounter) return;
   const text = DOM.secretInput.value;
   const bytes = new TextEncoder().encode(text).length;
   DOM.charCounter.textContent = `${text.length} chars / ${bytes} bytes`;
@@ -268,6 +635,7 @@ function updateCharCounter() {
 function initSyntheticVideo() {
   AppState.frames = StegoPipelineEngine.generateSyntheticFrames(20, 320, 240);
   AppState.stegoFrames = [];
+  if (DOM.stegoDownloadSection) DOM.stegoDownloadSection.classList.add('hidden');
   updateVideoStats();
   renderFrameGallery();
   populateDWTDropdown();
@@ -283,9 +651,9 @@ function updateVideoStats() {
   const w = AppState.frames[0].width;
   const h = AppState.frames[0].height;
 
-  DOM.statTotalFrames.textContent = numFrames;
-  DOM.statResolution.textContent = `${w}x${h}`;
-  DOM.statCarrierFrames.textContent = numFrames;
+  if (DOM.statTotalFrames) DOM.statTotalFrames.textContent = numFrames;
+  if (DOM.statResolution) DOM.statResolution.textContent = `${w}x${h}`;
+  if (DOM.statCarrierFrames) DOM.statCarrierFrames.textContent = numFrames;
   updateCapacityStat();
 }
 
@@ -300,11 +668,11 @@ function updateCapacityStat() {
     bytesPerFrame = (w * h * 1.5 * AppState.bitsPerChannel) / 8;
   }
   const totalCapKB = ((bytesPerFrame * numFrames) / 1024).toFixed(1);
-  DOM.statCapacity.textContent = `${totalCapKB} KB`;
+  if (DOM.statCapacity) DOM.statCapacity.textContent = `${totalCapKB} KB`;
 }
 
-// Populate DWT Frame Dropdown
 function populateDWTDropdown() {
+  if (!DOM.dwtFrameSelect) return;
   DOM.dwtFrameSelect.innerHTML = '';
   AppState.frames.forEach((_, idx) => {
     const opt = document.createElement('option');
@@ -314,8 +682,8 @@ function populateDWTDropdown() {
   });
 }
 
-// Render Interactive Frame Gallery
 function renderFrameGallery() {
+  if (!DOM.frameGallery) return;
   DOM.frameGallery.innerHTML = '';
 
   AppState.frames.forEach((frame, idx) => {
@@ -323,7 +691,6 @@ function renderFrameGallery() {
     card.className = `frame-card ${idx === AppState.activeInspectIndex ? 'active' : ''}`;
     card.setAttribute('data-frame-index', idx);
 
-    // Render thumbnail
     const thumbCanvas = document.createElement('canvas');
     thumbCanvas.width = frame.width;
     thumbCanvas.height = frame.height;
@@ -345,62 +712,61 @@ function renderFrameGallery() {
       AppState.activeInspectIndex = idx;
       selectFrameForDeepInspect(idx);
       updateDWTView(idx);
-      DOM.dwtFrameSelect.value = idx;
+      if (DOM.dwtFrameSelect) DOM.dwtFrameSelect.value = idx;
     });
 
     DOM.frameGallery.appendChild(card);
   });
 }
 
-// Select Frame for Deep Comparison & Bit-Plane Visualizer
 function selectFrameForDeepInspect(frameIdx) {
   if (!AppState.frames || !AppState.frames[frameIdx]) return;
 
-  DOM.inspectFrameTitle.textContent = `Frame #${frameIdx.toString().padStart(2, '0')}`;
+  if (DOM.inspectFrameTitle) {
+    DOM.inspectFrameTitle.textContent = `Frame #${frameIdx.toString().padStart(2, '0')}`;
+  }
 
   const origFrame = AppState.frames[frameIdx];
   const stegoFrame = (AppState.stegoFrames && AppState.stegoFrames[frameIdx]) ? AppState.stegoFrames[frameIdx] : origFrame;
 
-  // Convert Cover & Stego frames to Data URLs
-  const origCanvas = document.createElement('canvas');
-  origCanvas.width = origFrame.width;
-  origCanvas.height = origFrame.height;
-  origCanvas.getContext('2d').putImageData(origFrame, 0, 0);
-  DOM.inspectOrigImg.src = origCanvas.toDataURL('image/png');
+  if (DOM.inspectOrigImg) {
+    const origCanvas = document.createElement('canvas');
+    origCanvas.width = origFrame.width;
+    origCanvas.height = origFrame.height;
+    origCanvas.getContext('2d').putImageData(origFrame, 0, 0);
+    DOM.inspectOrigImg.src = origCanvas.toDataURL('image/png');
+  }
 
-  const stegoCanvas = document.createElement('canvas');
-  stegoCanvas.width = stegoFrame.width;
-  stegoCanvas.height = stegoFrame.height;
-  stegoCanvas.getContext('2d').putImageData(stegoFrame, 0, 0);
-  DOM.inspectStegoImg.src = stegoCanvas.toDataURL('image/png');
+  if (DOM.inspectStegoImg) {
+    const stegoCanvas = document.createElement('canvas');
+    stegoCanvas.width = stegoFrame.width;
+    stegoCanvas.height = stegoFrame.height;
+    stegoCanvas.getContext('2d').putImageData(stegoFrame, 0, 0);
+    DOM.inspectStegoImg.src = stegoCanvas.toDataURL('image/png');
+  }
 
-  // Render active Bit-Plane
   renderActiveBitPlane(frameIdx);
 
-  // Difference Heatmap
-  DOM.inspectDiffImg.src = generateDiffHeatmapDataURL(origFrame, stegoFrame);
+  if (DOM.inspectDiffImg) {
+    DOM.inspectDiffImg.src = generateDiffHeatmapDataURL(origFrame, stegoFrame);
+  }
 
-  // Frame metrics
   const isAltered = AppState.stegoFrames && AppState.stegoFrames.length > 0;
   if (isAltered && AppState.lastMetrics && AppState.lastMetrics.frameMetrics) {
     const fm = AppState.lastMetrics.frameMetrics[frameIdx];
-    DOM.inspectPsnr.textContent = fm ? `${fm.psnr} dB` : '74.2 dB';
-    DOM.inspectMse.textContent = fm ? `${fm.mse}` : '0.002';
-    DOM.inspectSsim.textContent = fm ? `${fm.ssim}` : '0.999999';
+    if (DOM.inspectPsnr) DOM.inspectPsnr.textContent = fm ? `${fm.psnr} dB` : '74.2 dB';
+    if (DOM.inspectMse) DOM.inspectMse.textContent = fm ? `${fm.mse}` : '0.002';
+    if (DOM.inspectSsim) DOM.inspectSsim.textContent = fm ? `${fm.ssim}` : '0.999999';
   } else {
-    DOM.inspectPsnr.textContent = 'INF (Clean)';
-    DOM.inspectMse.textContent = '0.000000';
-    DOM.inspectSsim.textContent = '1.000000';
+    if (DOM.inspectPsnr) DOM.inspectPsnr.textContent = 'INF (Clean)';
+    if (DOM.inspectMse) DOM.inspectMse.textContent = '0.000000';
+    if (DOM.inspectSsim) DOM.inspectSsim.textContent = '1.000000';
   }
 
-  // Update Pixel-Level LSB demonstration with real pixel values from this frame
   updatePixelDemo(origFrame, stegoFrame);
-
-  // Render Complete 8-Bit Planes Decomposition Grid
   renderAll8BitPlanes(stegoFrame);
 }
 
-// Render active selected bit-plane
 function renderActiveBitPlane(frameIdx) {
   if (!AppState.frames || !AppState.frames[frameIdx]) return;
   const frame = (AppState.stegoFrames && AppState.stegoFrames[frameIdx]) ? AppState.stegoFrames[frameIdx] : AppState.frames[frameIdx];
@@ -411,17 +777,17 @@ function renderActiveBitPlane(frameIdx) {
     DOM.activeBitplaneHeader.textContent = `Active: ${label}`;
   }
 
-  DOM.inspectLsbImg.src = generateBitPlaneDataURL(frame, bit);
+  if (DOM.inspectLsbImg) {
+    DOM.inspectLsbImg.src = generateBitPlaneDataURL(frame, bit);
+  }
 }
 
-// Update Pixel-Level LSB Substitution Demonstration with real values
 function updatePixelDemo(origFrame, stegoFrame) {
   if (!origFrame || !DOM.rOrigVal) return;
 
   const dataOrig = origFrame.data;
   const dataStego = stegoFrame.data;
 
-  // Sample pixel at center
   const sampleX = Math.floor(origFrame.width / 2);
   const sampleY = Math.floor(origFrame.height / 2);
   const pIdx = (sampleY * origFrame.width + sampleX) * 4;
@@ -436,35 +802,31 @@ function updatePixelDemo(origFrame, stegoFrame) {
 
   const toBin = (v) => v.toString(2).padStart(8, '0');
 
-  // Red
   const rBin0 = toBin(r0);
   const rBin1 = toBin(r1);
-  DOM.rOrigVal.innerHTML = `${rBin0.slice(0, 7)}<strong class="bit-orig">${rBin0[7]}</strong><sub>2</sub> (${r0})`;
-  DOM.rSecretBit.textContent = rBin1[7];
-  DOM.rStegoVal.innerHTML = `${rBin1.slice(0, 7)}<strong class="bit-mod">${rBin1[7]}</strong><sub>2</sub> (${r1})`;
+  if (DOM.rOrigVal) DOM.rOrigVal.innerHTML = `${rBin0.slice(0, 7)}<strong class="bit-orig">${rBin0[7]}</strong><sub>2</sub> (${r0})`;
+  if (DOM.rSecretBit) DOM.rSecretBit.textContent = rBin1[7];
+  if (DOM.rStegoVal) DOM.rStegoVal.innerHTML = `${rBin1.slice(0, 7)}<strong class="bit-mod">${rBin1[7]}</strong><sub>2</sub> (${r1})`;
   const dR = r1 - r0;
-  DOM.rDeltaVal.textContent = `Intensity Delta: ${dR >= 0 ? '+' : ''}${dR} (${((dR / 255) * 100).toFixed(2)}%)`;
+  if (DOM.rDeltaVal) DOM.rDeltaVal.textContent = `Intensity Delta: ${dR >= 0 ? '+' : ''}${dR} (${((dR / 255) * 100).toFixed(2)}%)`;
 
-  // Green
   const gBin0 = toBin(g0);
   const gBin1 = toBin(g1);
-  DOM.gOrigVal.innerHTML = `${gBin0.slice(0, 7)}<strong class="bit-orig">${gBin0[7]}</strong><sub>2</sub> (${g0})`;
-  DOM.gSecretBit.textContent = gBin1[7];
-  DOM.gStegoVal.innerHTML = `${gBin1.slice(0, 7)}<strong class="bit-mod">${gBin1[7]}</strong><sub>2</sub> (${g1})`;
+  if (DOM.gOrigVal) DOM.gOrigVal.innerHTML = `${gBin0.slice(0, 7)}<strong class="bit-orig">${gBin0[7]}</strong><sub>2</sub> (${g0})`;
+  if (DOM.gSecretBit) DOM.gSecretBit.textContent = gBin1[7];
+  if (DOM.gStegoVal) DOM.gStegoVal.innerHTML = `${gBin1.slice(0, 7)}<strong class="bit-mod">${gBin1[7]}</strong><sub>2</sub> (${g1})`;
   const dG = g1 - g0;
-  DOM.gDeltaVal.textContent = `Intensity Delta: ${dG >= 0 ? '+' : ''}${dG} (${((dG / 255) * 100).toFixed(2)}%)`;
+  if (DOM.gDeltaVal) DOM.gDeltaVal.textContent = `Intensity Delta: ${dG >= 0 ? '+' : ''}${dG} (${((dG / 255) * 100).toFixed(2)}%)`;
 
-  // Blue
   const bBin0 = toBin(b0);
   const bBin1 = toBin(b1);
-  DOM.bOrigVal.innerHTML = `${bBin0.slice(0, 7)}<strong class="bit-orig">${bBin0[7]}</strong><sub>2</sub> (${b0})`;
-  DOM.bSecretBit.textContent = bBin1[7];
-  DOM.bStegoVal.innerHTML = `${bBin1.slice(0, 7)}<strong class="bit-mod">${bBin1[7]}</strong><sub>2</sub> (${b1})`;
+  if (DOM.bOrigVal) DOM.bOrigVal.innerHTML = `${bBin0.slice(0, 7)}<strong class="bit-orig">${bBin0[7]}</strong><sub>2</sub> (${b0})`;
+  if (DOM.bSecretBit) DOM.bSecretBit.textContent = bBin1[7];
+  if (DOM.bStegoVal) DOM.bStegoVal.innerHTML = `${bBin1.slice(0, 7)}<strong class="bit-mod">${bBin1[7]}</strong><sub>2</sub> (${b1})`;
   const dB = b1 - b0;
-  DOM.bDeltaVal.textContent = `Intensity Delta: ${dB >= 0 ? '+' : ''}${dB} (${((dB / 255) * 100).toFixed(2)}%)`;
+  if (DOM.bDeltaVal) DOM.bDeltaVal.textContent = `Intensity Delta: ${dB >= 0 ? '+' : ''}${dB} (${((dB / 255) * 100).toFixed(2)}%)`;
 }
 
-// Render All 8 Bit-Planes (Bit 7 to Bit 0) Grid
 function renderAll8BitPlanes(frame) {
   if (!DOM.allBitplanesGrid || !frame) return;
 
@@ -489,14 +851,12 @@ function renderAll8BitPlanes(frame) {
   }
 }
 
-// Update 4-Quadrant 2D-DWT Visualizer
 function updateDWTView(frameIdx) {
   if (!AppState.frames || !AppState.frames[frameIdx] || !DOM.dwtCanvas) return;
 
   const frame = (AppState.stegoFrames && AppState.stegoFrames[frameIdx]) ? AppState.stegoFrames[frameIdx] : AppState.frames[frameIdx];
   const { width, height, data } = frame;
 
-  // Extract green channel
   const greenChannel = new Float32Array(width * height);
   for (let i = 0; i < width * height; i++) {
     greenChannel[i] = data[i * 4 + 1];
@@ -508,7 +868,6 @@ function updateDWTView(frameIdx) {
   DWTEngine.renderDWTToCanvas(dwtObj, DOM.dwtCanvas);
 }
 
-// Generate Bit-Plane Visualizer Data URL
 function generateBitPlaneDataURL(frame, bitIndex = 0) {
   const canvas = document.createElement('canvas');
   canvas.width = frame.width;
@@ -531,7 +890,6 @@ function generateBitPlaneDataURL(frame, bitIndex = 0) {
   return canvas.toDataURL('image/png');
 }
 
-// Generate Difference Heatmap
 function generateDiffHeatmapDataURL(origImg, stegoImg) {
   const canvas = document.createElement('canvas');
   canvas.width = origImg.width;
@@ -564,9 +922,8 @@ function generateDiffHeatmapDataURL(origImg, stegoImg) {
   return canvas.toDataURL('image/png');
 }
 
-// Execute Client-Side Stego Embedding (LSB or 2D-DWT)
 async function runEmbedding() {
-  const text = DOM.secretInput.value.trim();
+  const text = DOM.secretInput ? DOM.secretInput.value.trim() : '';
 
   if (!text) {
     alert('Please enter a secret message to embed.');
@@ -574,8 +931,10 @@ async function runEmbedding() {
   }
 
   try {
-    DOM.btnEmbed.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Embedding into Video (${AppState.method.toUpperCase()})...`;
-    DOM.btnEmbed.disabled = true;
+    if (DOM.btnEmbed) {
+      DOM.btnEmbed.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Embedding into Video (${AppState.method.toUpperCase()})...`;
+      DOM.btnEmbed.disabled = true;
+    }
 
     const result = await StegoPipelineEngine.embedPipeline({
       frames: AppState.frames,
@@ -587,47 +946,53 @@ async function runEmbedding() {
     if (result.success) {
       AppState.stegoFrames = result.stegoFrames;
       AppState.lastMetrics = result.metrics;
+      AppState.lastEmbedCrc = result.crc;
+      AppState.secretText = text;
 
       // Update Result Notification Card
-      DOM.embedResultCard.classList.remove('hidden');
+      if (DOM.embedResultCard) DOM.embedResultCard.classList.remove('hidden');
       const methodLabel = AppState.method === 'dwt' ? '2D-DWT Integer Wavelet Subbands (HH/HL)' : 'Spatial LSB Bit-Planes';
-      DOM.embedPills.innerHTML = `
-        <span class="result-pill"><i class="fa-solid fa-water text-cyan"></i> Mode: ${methodLabel}</span>
-        <span class="result-pill"><i class="fa-solid fa-shield-check text-emerald"></i> CRC32 Checksum Embedded: 0x${result.crc.toString(16).toUpperCase()}</span>
-        <span class="result-pill"><i class="fa-solid fa-layer-group"></i> Altered: ${result.metrics.alteredFramesCount} Frames</span>
-        <span class="result-pill"><i class="fa-solid fa-chart-simple"></i> PSNR: ${result.metrics.avgPsnr} dB</span>
-        <span class="result-pill"><i class="fa-solid fa-check"></i> SSIM: ${result.metrics.avgSsim}</span>
-      `;
+      if (DOM.embedPills) {
+        DOM.embedPills.innerHTML = `
+          <span class="result-pill"><i class="fa-solid fa-water text-cyan"></i> Mode: ${methodLabel}</span>
+          <span class="result-pill"><i class="fa-solid fa-shield-check text-emerald"></i> CRC32 Checksum: 0x${result.crc.toString(16).toUpperCase()}</span>
+          <span class="result-pill"><i class="fa-solid fa-layer-group"></i> Altered: ${result.metrics.alteredFramesCount} Frames</span>
+          <span class="result-pill"><i class="fa-solid fa-chart-simple"></i> PSNR: ${result.metrics.avgPsnr} dB</span>
+          <span class="result-pill"><i class="fa-solid fa-check"></i> SSIM: ${result.metrics.avgSsim}</span>
+        `;
+      }
 
-      // Update Analytics Tab
-      DOM.metricPsnr.textContent = `${result.metrics.avgPsnr} dB`;
-      DOM.metricSsim.textContent = `${result.metrics.avgSsim}`;
-      DOM.metricMse.textContent = `${result.metrics.avgMse}`;
-      DOM.metricAlteredFrames.textContent = `${result.metrics.alteredFramesCount} / ${result.metrics.totalFrames}`;
+      if (DOM.stegoDownloadSection) {
+        DOM.stegoDownloadSection.classList.remove('hidden');
+      }
 
-      // Refresh Inspector & DWT Visualizers
       selectFrameForDeepInspect(AppState.activeInspectIndex);
       updateDWTView(AppState.activeInspectIndex);
+
+      showStegoToast('Secret data successfully embedded into carrier video frames!', 'fa-lock');
     }
   } catch (err) {
     console.error('Embedding error:', err);
     alert(`Embedding failed: ${err.message}`);
   } finally {
-    DOM.btnEmbed.innerHTML = `<i class="fa-solid fa-lock-open"></i> Run Stego Embedding Pipeline`;
-    DOM.btnEmbed.disabled = false;
+    if (DOM.btnEmbed) {
+      DOM.btnEmbed.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Run Stego Embedding Pipeline`;
+      DOM.btnEmbed.disabled = false;
+    }
   }
 }
 
-// Execute Client-Side Extraction & Verification
 async function runExtraction() {
   if (!AppState.stegoFrames || AppState.stegoFrames.length === 0) {
-    alert('No stego video available. Please run embedding first.');
+    alert('No stego video available in active session. Please run embedding first, or use the "Extract & Decode Message" tab to upload an external stego video file.');
     return;
   }
 
   try {
-    DOM.btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Extracting Secret Payload (${AppState.method.toUpperCase()})...`;
-    DOM.btnExtract.disabled = true;
+    if (DOM.btnExtract) {
+      DOM.btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Extracting Secret Payload (${AppState.method.toUpperCase()})...`;
+      DOM.btnExtract.disabled = true;
+    }
 
     const result = await StegoPipelineEngine.extractPipeline({
       stegoFrames: AppState.stegoFrames,
@@ -635,79 +1000,31 @@ async function runExtraction() {
       bitsPerChannel: AppState.bitsPerChannel
     });
 
-    DOM.extractResultBox.classList.remove('hidden');
+    if (DOM.extractResultBox) DOM.extractResultBox.classList.remove('hidden');
 
     if (result.success) {
-      DOM.recoveredTextDisplay.textContent = result.recoveredText;
-      DOM.crcBadge.className = 'integrity-badge verified';
-      DOM.crcBadge.innerHTML = `<i class="fa-solid fa-shield-check"></i> ${result.integrityMessage} (${result.payloadBytes} Bytes Lossless)`;
+      if (DOM.recoveredTextDisplay) DOM.recoveredTextDisplay.textContent = result.recoveredText;
+      if (DOM.crcBadge) {
+        DOM.crcBadge.className = 'integrity-badge verified';
+        DOM.crcBadge.innerHTML = `<i class="fa-solid fa-shield-check"></i> ${result.integrityMessage} (${result.payloadBytes} Bytes Lossless)`;
+      }
+      showStegoToast('Payload extracted & validated losslessly!', 'fa-shield-check');
     } else {
-      DOM.recoveredTextDisplay.textContent = `[EXTRACTION FAILED]: ${result.error}\n${result.recoveredText ? 'Partial text recovered:\n' + result.recoveredText : ''}`;
-      DOM.crcBadge.className = 'integrity-badge corrupted';
-      DOM.crcBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> CORRUPTED / MISMATCH`;
+      if (DOM.recoveredTextDisplay) {
+        DOM.recoveredTextDisplay.textContent = `[EXTRACTION FAILED]: ${result.error}\n${result.recoveredText ? 'Partial text recovered:\n' + result.recoveredText : ''}`;
+      }
+      if (DOM.crcBadge) {
+        DOM.crcBadge.className = 'integrity-badge corrupted';
+        DOM.crcBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> CORRUPTED / MISMATCH`;
+      }
     }
   } catch (err) {
     console.error('Extraction error:', err);
     alert(`Extraction failed: ${err.message}`);
   } finally {
-    DOM.btnExtract.innerHTML = `<i class="fa-solid fa-unlock-keyhole"></i> Extract Secret Payload`;
-    DOM.btnExtract.disabled = false;
-  }
-}
-
-// Render Teacher Viva & Review Questions
-function renderVivaQA() {
-  const qaData = [
-    {
-      q: 'Q1: What is Video Steganography and why is it preferred over Image Steganography?',
-      a: 'Video steganography conceals confidential data within a sequence of video frames. It is preferred over static image steganography because video provides <strong>massively higher payload capacity</strong> and <strong>temporal dynamics</strong> that naturally disguise subtle pixel modifications from human perception.'
-    },
-    {
-      q: 'Q2: What is Spatial Domain LSB (Least Significant Bit) Steganography?',
-      a: 'In Spatial LSB, secret bits directly replace the least significant bit (Bit 0) of the RGB color channels. Since Bit 0 contributes only $\\pm 1$ level of intensity out of 256, the visual distortion is imperceptible to the Human Visual System (HVS).'
-    },
-    {
-      q: 'Q3: What is 2D Discrete Wavelet Transform (2D-DWT) and how does Haar Wavelet decompose a video frame?',
-      a: 'The 2D-DWT decomposes a 2D image matrix into 4 frequency subbands: <strong>LL</strong> (Approximation), <strong>LH</strong> (Horizontal detail), <strong>HL</strong> (Vertical detail), and <strong>HH</strong> (Diagonal detail) at half the original spatial dimensions using low-pass and high-pass filters.'
-    },
-    {
-      q: 'Q4: Why do we embed secret data in high-frequency detail subbands (HH, HL, LH) instead of LL?',
-      a: 'The <strong>LL subband</strong> holds fundamental luminance and coarse structure, so modifying it creates noticeable visual degradation. The <strong>HH, HL, and LH subbands</strong> represent high-frequency textures and edges where the Human Visual System has lowest sensitivity, ensuring superior imperceptibility (PSNR > 75 dB).'
-    },
-    {
-      q: 'Q5: How does 2D-IDWT (Inverse DWT) reconstruct the stego video frame?',
-      a: 'After secret bits are embedded into the high-frequency wavelet coefficients, the four subbands ($LL, LH, HL_{\\text{stego}}, HH_{\\text{stego}}$) are passed to the 2D Inverse Discrete Wavelet Transform synthesis filter to mathematically reconstruct the spatial domain RGB frame losslessly.'
-    },
-    {
-      q: 'Q6: What are the key trade-offs between Spatial LSB and Transform 2D-DWT?',
-      a: '<strong>LSB</strong> provides maximum payload capacity (3 bits/pixel) and lowest computational complexity, but is fragile against lossy compression. <strong>2D-DWT</strong> provides superior imperceptibility, natural edge-masking, and high robustness against compression/filtering.'
-    },
-    {
-      q: 'Q7: How do you verify the integrity of the extracted secret data?',
-      a: 'Our system packages the secret payload in a structured packet: <code>[4-Byte Magic Header "STG\\x01"] + [4-Byte Payload Length] + [4-Byte CRC32 Checksum] + [Secret Payload Bits]</code>. The receiver validates the CRC32 checksum over the extracted payload to guarantee 100% corruption-free recovery.'
-    },
-    {
-      q: 'Q8: What benchmarks are achieved in PSNR, MSE, and SSIM?',
-      a: 'Our system achieves an <strong>Average PSNR > 74 dB</strong> (where > 40 dB is imperceptible to the human eye), <strong>MSE < 0.003</strong>, and <strong>SSIM = 0.999999</strong> (nearly 100% structurally identical).'
+    if (DOM.btnExtract) {
+      DOM.btnExtract.innerHTML = `<i class="fa-solid fa-unlock-keyhole"></i> Extract Active Session`;
+      DOM.btnExtract.disabled = false;
     }
-  ];
-
-  DOM.qaAccordion.innerHTML = '';
-  qaData.forEach((item) => {
-    const card = document.createElement('div');
-    card.className = 'qa-card';
-    card.innerHTML = `
-      <div class="qa-question">
-        <span>${item.q}</span>
-        <i class="fa-solid fa-chevron-down"></i>
-      </div>
-      <div class="qa-answer">${item.a}</div>
-    `;
-
-    card.querySelector('.qa-question').addEventListener('click', () => {
-      card.classList.toggle('open');
-    });
-
-    DOM.qaAccordion.appendChild(card);
-  });
+  }
 }

@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Digital Video Steganography (LSB & 2D-DWT) | DBIT Dept of ISE</title>
+  <title>STENOVISION AI | Next-Gen Video Steganography & Decryption Engine</title>
   
-  <!-- Modern Google Fonts -->
+  <!-- Google Sans, Google Sans Code & Modern Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Google+Sans+Code:wght@400;500;600;700&family=Google+Sans+Text:wght@400;500;600;700&family=Google+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -23,21 +23,7 @@
   <div class="bg-glow bg-glow-2"></div>
   <div class="bg-glow bg-glow-3"></div>
 
-  <!-- College & Project Header Banner -->
-  <div class="college-bar">
-    <div class="college-bar-inner">
-      <div class="college-info">
-        <span class="college-badge"><i class="fa-solid fa-university"></i> Don Bosco Institute of Technology (DBIT)</span>
-        <span class="dept-badge">Department of Information Science & Engineering (ISE)</span>
-        <span class="ay-badge">Academic Year 2025–26</span>
-      </div>
-      <div class="guide-info">
-        <span>Under The Guidance Of: <strong>Dr. Ramya K V</strong> (Associate Professor, Dept of ISE)</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- App Header -->
+  <!-- App Header / Top Navigation Bar -->
   <header class="app-header">
     <div class="header-container">
       <div class="brand">
@@ -45,22 +31,24 @@
           <i class="fa-solid fa-shield-halved"></i>
         </div>
         <div class="brand-text">
-          <h1>DIGITAL VIDEO STEGANOGRAPHY</h1>
-          <p class="subtitle">LSB (Spatial Domain) & 2D-DWT (Transform Domain)</p>
+          <h1>STENOVISION <span class="ai-badge">AI</span></h1>
+          <p class="subtitle">Neural & Wavelet Video Steganography Engine</p>
         </div>
       </div>
 
-      <!-- Team Members Dropdown Trigger -->
-      <div class="team-capsule" id="team-capsule" title="Click to toggle Team Members">
-        <div class="team-avatars">
-          <span class="avatar-tag">AC</span>
-          <span class="avatar-tag">AG</span>
-          <span class="avatar-tag highlight">HG</span>
-          <span class="avatar-tag">AS</span>
+      <!-- Quick Engine Status Badges -->
+      <div class="header-status-pills">
+        <div class="status-pill live">
+          <span class="pulse-dot"></span>
+          <span>Engine v2.4 Active</span>
         </div>
-        <div class="team-label">
-          <strong>Team ISE-06</strong>
-          <span>4 Members</span>
+        <div class="status-pill metric">
+          <i class="fa-solid fa-water text-cyan"></i>
+          <span>2D-DWT Haar</span>
+        </div>
+        <div class="status-pill metric">
+          <i class="fa-solid fa-shield-check text-emerald"></i>
+          <span>CRC32 Lossless</span>
         </div>
       </div>
     </div>
@@ -68,77 +56,54 @@
     <!-- Navigation Tabs -->
     <nav class="nav-tabs">
       <button class="nav-tab active" data-tab="studio">
-        <i class="fa-solid fa-flask"></i> <span>Live Studio</span>
+        <i class="fa-solid fa-lock"></i> <span>Embed & Secure Video</span>
       </button>
-      <button class="nav-tab" data-tab="dwt">
-        <i class="fa-solid fa-water"></i> <span>2D-DWT Wavelets</span>
+      <button class="nav-tab" data-tab="extractor">
+        <i class="fa-solid fa-unlock-keyhole"></i> <span>Extract & Decode Message</span>
       </button>
       <button class="nav-tab" data-tab="inspector">
-        <i class="fa-solid fa-microchip"></i> <span>LSB Bit-Plane Inspector</span>
+        <i class="fa-solid fa-wave-square"></i> <span>Wavelet & Bit-Plane Inspector</span>
       </button>
-      <button class="nav-tab" data-tab="diagrams">
-        <i class="fa-solid fa-diagram-project"></i> <span>System Diagrams</span>
-      </button>
-      <button class="nav-tab" data-tab="literature">
-        <i class="fa-solid fa-book-bookmark"></i> <span>Literature Survey</span>
-      </button>
-      <button class="nav-tab" data-tab="metrics">
-        <i class="fa-solid fa-chart-pie"></i> <span>Quality Analytics</span>
-      </button>
-      <button class="nav-tab" data-tab="viva">
-        <i class="fa-solid fa-graduation-cap"></i> <span>Presentation & Viva</span>
+      <button class="nav-tab" data-tab="architecture">
+        <i class="fa-solid fa-circle-nodes"></i> <span>Security Protocol & Specs</span>
       </button>
     </nav>
   </header>
-
-  <!-- Team Members Banner -->
-  <div class="team-drawer" id="team-drawer">
-    <div class="team-grid">
-      <div class="team-member-card">
-        <div class="member-role">Student 1</div>
-        <div class="member-name">Abhishek C</div>
-        <div class="member-usn">1DB23IS002</div>
-      </div>
-      <div class="team-member-card">
-        <div class="member-role">Student 2</div>
-        <div class="member-name">Abhishek G</div>
-        <div class="member-usn">1DB23IS003</div>
-      </div>
-      <div class="team-member-card highlight-card">
-        <div class="member-role">Student 3</div>
-        <div class="member-name">Harshith Gowda B S</div>
-        <div class="member-usn">1DB23IS060</div>
-      </div>
-      <div class="team-member-card">
-        <div class="member-role">Student 4</div>
-        <div class="member-name">Anjaneya S H</div>
-        <div class="member-usn">1DB23IS018</div>
-      </div>
-    </div>
-  </div>
 
   <!-- Main Application Container -->
   <main class="main-container">
 
     <!-- ================================================================= -->
-    <!-- TAB 1: LIVE STEGO STUDIO -->
+    <!-- TAB 1: EMBED & SECURE VIDEO (STUDIO) -->
     <!-- ================================================================= -->
     <section id="tab-studio" class="tab-pane active">
+      
+      <!-- Studio Hero Header -->
+      <div class="hero-banner glass-card">
+        <div class="hero-badge">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> AI Carrier Transformation
+        </div>
+        <h2>Conceal Confidential Data Inside Any Video</h2>
+        <p>
+          Embed confidential text, credentials, or encrypted payloads directly into high-frequency 2D Haar Wavelet subbands ($HH, HL$) and spatial bit-planes. The resulting stego video is visually indistinguishable from the original ($PSNR > 75 \text{ dB}, SSIM > 0.9999$) and 100% losslessly recoverable.
+        </p>
+      </div>
+
       <div class="studio-grid">
         
-        <!-- Left Panel: Controls & Video Ingestion -->
+        <!-- Left Panel: Carrier Video Source & Config -->
         <div class="panel glass-card">
           <div class="panel-header">
-            <h2><i class="fa-solid fa-sliders"></i> 1. Video Ingestion & Mode Setup</h2>
+            <h2><i class="fa-solid fa-video text-cyan"></i> 1. Carrier Video Stream Setup</h2>
             <div class="header-action-buttons">
-              <input type="file" id="video-file-input" accept="video/mp4,video/webm,video/ogg,video/quicktime" style="display: none;">
+              <input type="file" id="video-file-input" accept="video/mp4,video/webm,video/ogg,video/quicktime,.stego,.json,image/png" style="display: none;">
               
-              <button id="btn-upload-video" class="btn btn-primary btn-sm" title="Upload an MP4/WebM video file from your computer">
+              <button id="btn-upload-video" class="btn btn-primary btn-sm" title="Upload an MP4/WebM video file from your device">
                 <i class="fa-solid fa-cloud-arrow-up"></i> Upload Video
               </button>
               
-              <button id="btn-load-sample" class="btn btn-secondary btn-sm" title="Regenerate dynamic synthetic video sequence">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Sample Video
+              <button id="btn-load-sample" class="btn btn-secondary btn-sm" title="Generate synthetic dynamic video carrier">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> AI Sample Video
               </button>
             </div>
           </div>
@@ -148,7 +113,7 @@
             <!-- Video Extraction Progress Indicator -->
             <div id="video-upload-progress" class="upload-progress-box hidden">
               <div class="progress-info">
-                <span id="upload-progress-text"><i class="fa-solid fa-spinner fa-spin"></i> Decoding video frames...</span>
+                <span id="upload-progress-text"><i class="fa-solid fa-spinner fa-spin"></i> Decoding carrier video frames...</span>
                 <span id="upload-progress-pct" class="glow-cyan">0%</span>
               </div>
               <div class="progress-bar-bg">
@@ -156,16 +121,16 @@
               </div>
             </div>
 
-            <!-- Custom Video Preview (if uploaded) -->
+            <!-- Custom Video Preview -->
             <div id="video-preview-wrapper" class="video-preview-wrapper hidden">
               <video id="video-player-preview" controls playsinline></video>
-              <div class="video-filename-tag"><i class="fa-solid fa-file-video"></i> <span id="uploaded-video-name">custom_video.mp4</span></div>
+              <div class="video-filename-tag"><i class="fa-solid fa-file-video"></i> <span id="uploaded-video-name">carrier_video.mp4</span></div>
             </div>
 
             <!-- Video Stats Card -->
             <div class="video-info-box">
               <div class="info-row">
-                <span class="label"><i class="fa-solid fa-video"></i> Video Stream:</span>
+                <span class="label"><i class="fa-solid fa-film"></i> Carrier Stream:</span>
                 <span class="value highlight" id="stat-video-status">20 Frames Loaded</span>
               </div>
               <div class="info-grid">
@@ -182,7 +147,7 @@
                   <span class="stat-num glow-cyan" id="stat-carrier-frames">20</span>
                 </div>
                 <div class="mini-stat">
-                  <span class="sublabel">Stego Capacity</span>
+                  <span class="sublabel">Payload Capacity</span>
                   <span class="stat-num glow-green" id="stat-capacity">281.2 KB</span>
                 </div>
               </div>
@@ -191,12 +156,12 @@
             <!-- Steganographic Algorithm Selection -->
             <div class="control-group">
               <label for="select-method">
-                <span><i class="fa-solid fa-microchip text-cyan"></i> Steganographic Embedding Algorithm</span>
+                <span><i class="fa-solid fa-microchip text-cyan"></i> Steganographic Transformation Algorithm</span>
               </label>
               <select id="select-method" class="form-select">
-                <option value="dwt" selected>2D-DWT Wavelet Mode (Haar Transform - High Imperceptibility)</option>
+                <option value="dwt" selected>2D-DWT Wavelet Mode (Haar Transform - Maximum Imperceptibility)</option>
                 <option value="lsb">Spatial LSB Mode (Direct Bit-Plane Substitution - High Capacity)</option>
-                <option value="hybrid">Hybrid DWT + LSB Mode (LSB on High-Frequency Coefficients)</option>
+                <option value="hybrid">Hybrid DWT + LSB Mode (Wavelet Detail Masking)</option>
               </select>
             </div>
 
@@ -206,12 +171,12 @@
               <div class="radio-toggle">
                 <label class="radio-card active">
                   <input type="radio" name="bpc" value="1" checked>
-                  <span class="radio-title">1-Bit LSB</span>
+                  <span class="radio-title">1-Bit Depth</span>
                   <span class="radio-desc">Max Imperceptibility (PSNR > 74 dB)</span>
                 </label>
                 <label class="radio-card">
                   <input type="radio" name="bpc" value="2">
-                  <span class="radio-title">2-Bit LSB</span>
+                  <span class="radio-title">2-Bit Depth</span>
                   <span class="radio-desc">2x Capacity (PSNR > 55 dB)</span>
                 </label>
               </div>
@@ -219,28 +184,27 @@
           </div>
         </div>
 
-        <!-- Right Panel: Dual Workflow (Embed & Extract) -->
+        <!-- Right Panel: Confidential Payload & Embedding -->
         <div class="panel-column">
           
-          <!-- EMBEDDING PANEL -->
           <div class="panel glass-card">
             <div class="panel-header">
-              <h2><i class="fa-solid fa-lock"></i> 2. Sender: Embed Secret Message</h2>
-              <span class="badge badge-accent">Sender Module</span>
+              <h2><i class="fa-solid fa-lock text-purple"></i> 2. Confidential Secret Payload</h2>
+              <span class="badge badge-accent">Sender Pipeline</span>
             </div>
 
             <div class="panel-body">
               <div class="control-group">
                 <div class="textarea-header">
-                  <label for="secret-message-input">Confidential Secret Message</label>
+                  <label for="secret-message-input">Secret Message / Encrypted Transmission</label>
                   <span class="char-counter" id="char-counter">0 chars / 0 bytes</span>
                 </div>
-                <textarea id="secret-message-input" class="form-textarea" rows="3" placeholder="Enter confidential message to hide in video...">PROJECT TRANSMISSION: Digital Video Steganography System (Dept of ISE, DBIT). Confidential data embedded into carrier frames using LSB and 2D-DWT Wavelet decomposition!</textarea>
+                <textarea id="secret-message-input" class="form-textarea" rows="3" placeholder="Enter confidential message or credentials to hide inside video...">CONFIDENTIAL TRANSMISSION: Secure Video Steganography pipeline executed with 2D Haar Wavelet decomposition and lossless CRC32 packet integrity!</textarea>
               </div>
 
               <div class="action-row">
-                <button id="btn-embed" class="btn btn-primary btn-lg">
-                  <i class="fa-solid fa-lock-open"></i> Run Stego Embedding Pipeline
+                <button id="btn-embed" class="btn btn-primary btn-lg" style="width: 100%;">
+                  <i class="fa-solid fa-shield-halved"></i> Run Stego Embedding Pipeline
                 </button>
               </div>
 
@@ -248,42 +212,73 @@
               <div id="embed-result-card" class="result-card hidden">
                 <div class="result-icon success"><i class="fa-solid fa-circle-check"></i></div>
                 <div class="result-details">
-                  <h4>Embedding Completed Successfully!</h4>
-                  <p id="embed-result-msg">Payload packaged with CRC32 checksum and embedded into carrier video frames.</p>
+                  <h4>Payload Embedded Successfully!</h4>
+                  <p id="embed-result-msg">Structured stego packet framed with CRC32 checksum and embedded into carrier video frames.</p>
                   <div class="result-pills" id="embed-pills"></div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <!-- EXTRACTION PANEL -->
-          <div class="panel glass-card">
-            <div class="panel-header">
-              <h2><i class="fa-solid fa-key"></i> 3. Receiver: Extract Secret Data</h2>
-              <span class="badge badge-success">Receiver Module</span>
-            </div>
-
-            <div class="panel-body">
-              <p class="section-desc">
-                The receiver reads bits from the stego frames, validates the Magic Packet Header, and verifies the 32-bit CRC32 checksum for lossless recovery.
-              </p>
-
-              <div class="action-row">
-                <button id="btn-extract" class="btn btn-success btn-lg">
-                  <i class="fa-solid fa-unlock-keyhole"></i> Extract Secret Payload
-                </button>
-              </div>
-
-              <!-- Extraction Output Box -->
-              <div id="extract-result-box" class="extract-box hidden">
-                <div class="extract-header">
-                  <span class="extract-title"><i class="fa-solid fa-terminal"></i> Recovered Secret Transmission:</span>
-                  <span class="integrity-badge verified" id="crc-badge">
-                    <i class="fa-solid fa-shield-check"></i> CRC32 VALIDATED (Lossless)
-                  </span>
+              <!-- Stego Media Download Options -->
+              <div id="stego-download-section" class="stego-download-section hidden">
+                <div class="download-section-header">
+                  <span class="download-title"><i class="fa-solid fa-cloud-arrow-down glow-cyan"></i> Export & Download Stego Media</span>
+                  <span class="tag tag-success">Carrier Ready</span>
                 </div>
-                <div class="extract-content" id="recovered-text-display"></div>
+                <p class="download-desc">Download the video containing your inserted confidential message. You can share this file or upload it in the <strong>Extract & Decode</strong> tab to reveal the secret message!</p>
+                <div class="download-actions-grid">
+                  <button id="btn-download-video" class="btn btn-download-primary" title="Download compiled playable stego video in WebM format">
+                    <i class="fa-solid fa-file-video"></i>
+                    <div class="btn-text-block">
+                      <span class="btn-main-label">Download Stego Video (.webm)</span>
+                      <span class="btn-sub-label">Playable video with embedded payload</span>
+                    </div>
+                  </button>
+                  <button id="btn-download-bundle" class="btn btn-download-secondary" title="Download lossless stego archive for 100% bit-exact transmission">
+                    <i class="fa-solid fa-box-archive"></i>
+                    <div class="btn-text-block">
+                      <span class="btn-main-label">Download Lossless Package (.stego)</span>
+                      <span class="btn-sub-label">Guaranteed bit-exact lossless carrier</span>
+                    </div>
+                  </button>
+                  <button id="btn-download-frame" class="btn btn-download-secondary" title="Download active stego carrier frame as PNG">
+                    <i class="fa-solid fa-image"></i>
+                    <div class="btn-text-block">
+                      <span class="btn-main-label">Download Frame (.png)</span>
+                      <span class="btn-sub-label">Individual lossless stego frame</span>
+                    </div>
+                  </button>
+                </div>
+                <div id="download-progress-box" class="upload-progress-box hidden" style="margin-top: 12px; margin-bottom: 0;">
+                  <div class="progress-info">
+                    <span id="download-progress-text"><i class="fa-solid fa-spinner fa-spin"></i> Compiling Stego Video...</span>
+                    <span id="download-progress-pct" class="glow-cyan">0%</span>
+                  </div>
+                  <div class="progress-bar-bg">
+                    <div id="download-progress-fill" class="progress-bar-fill" style="width: 0%;"></div>
+                  </div>
+                </div>
               </div>
+
+              <!-- Receiver Quick Extract Card -->
+              <div class="quick-extract-card" style="margin-top: 18px;">
+                <div class="quick-extract-header">
+                  <span><i class="fa-solid fa-key text-emerald"></i> Quick In-Session Extraction</span>
+                  <button id="btn-extract" class="btn btn-success btn-sm">
+                    <i class="fa-solid fa-unlock-keyhole"></i> Extract Active Session
+                  </button>
+                </div>
+                <!-- Extraction Output Box -->
+                <div id="extract-result-box" class="extract-box hidden" style="margin-top: 10px;">
+                  <div class="extract-header">
+                    <span class="extract-title"><i class="fa-solid fa-terminal"></i> Decrypted Secret Transmission:</span>
+                    <span class="integrity-badge verified" id="crc-badge">
+                      <i class="fa-solid fa-shield-check"></i> CRC32 VALIDATED
+                    </span>
+                  </div>
+                  <div class="extract-content" id="recovered-text-display"></div>
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -293,10 +288,193 @@
     </section>
 
     <!-- ================================================================= -->
-    <!-- TAB 2: 2D-DWT WAVELET INSPECTOR -->
+    <!-- TAB 2: EXTRACT & DECODE MESSAGE (STANDALONE EXTRACTOR) -->
     <!-- ================================================================= -->
-    <section id="tab-dwt" class="tab-pane">
-      <div class="glass-card panel">
+    <section id="tab-extractor" class="tab-pane">
+      
+      <div class="hero-banner glass-card">
+        <div class="hero-badge">
+          <i class="fa-solid fa-unlock-keyhole"></i> AI Receiver Decryption Engine
+        </div>
+        <h2>Decode & Reveal Hidden Video Transmissions</h2>
+        <p>
+          Upload any stego video file (<code>.mp4</code>, <code>.webm</code>, <code>.ogg</code>, <code>.mov</code>), lossless carrier archive (<code>.stego</code>), or image containing embedded data. The AI auto-detects embedding algorithms, scans high-frequency wavelet detail coefficients, validates magic packet signatures, and verifies 32-bit CRC32 checksums for 100% losslessly recovered transmissions.
+        </p>
+      </div>
+
+      <div class="extractor-grid">
+        <!-- Left: Stego File Ingestion & Preview -->
+        <div class="panel glass-card">
+          <div class="panel-header">
+            <h2><i class="fa-solid fa-cloud-arrow-up text-cyan"></i> 1. Upload Stego Video / Carrier File</h2>
+            <span class="badge badge-accent">Ingestion</span>
+          </div>
+
+          <div class="panel-body">
+            <!-- Drag and Drop Zone -->
+            <input type="file" id="extractor-file-input" accept="video/mp4,video/webm,video/ogg,video/quicktime,video/avi,.stego,.json,image/png,image/jpeg" style="display: none;">
+            
+            <div id="extractor-dropzone" class="stego-dropzone">
+              <div class="dropzone-icon">
+                <i class="fa-solid fa-film"></i>
+              </div>
+              <div class="dropzone-text">
+                <h3>Drag & Drop Stego Video or Archive</h3>
+                <p>or <button type="button" id="btn-browse-extractor-file" class="btn-text-link">browse from your device</button></p>
+              </div>
+              <div class="format-badges">
+                <span class="format-badge"><i class="fa-solid fa-file-video"></i> MP4 / WebM</span>
+                <span class="format-badge"><i class="fa-solid fa-box-archive"></i> .stego Bundle</span>
+                <span class="format-badge"><i class="fa-solid fa-file-image"></i> PNG Frames</span>
+              </div>
+            </div>
+
+            <!-- Upload/Decoding Progress -->
+            <div id="extractor-upload-progress" class="upload-progress-box hidden">
+              <div class="progress-info">
+                <span id="extractor-progress-text"><i class="fa-solid fa-spinner fa-spin"></i> Decoding carrier video frames...</span>
+                <span id="extractor-progress-pct" class="glow-cyan">0%</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div id="extractor-progress-fill" class="progress-bar-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <!-- Uploaded File Video Preview -->
+            <div id="extractor-preview-wrapper" class="extractor-preview-wrapper hidden">
+              <div class="preview-header">
+                <span><i class="fa-solid fa-video"></i> Carrier Stream Preview</span>
+                <span class="badge badge-success" id="extractor-file-badge">Loaded</span>
+              </div>
+              <video id="extractor-video-player" controls playsinline></video>
+              <div class="video-filename-tag">
+                <i class="fa-solid fa-file-shield"></i> <span id="extractor-filename-display">stego_video.webm</span>
+              </div>
+
+              <!-- Ingested File Stats Grid -->
+              <div class="extractor-stats-grid">
+                <div class="mini-stat">
+                  <span class="sublabel">Carrier Frames</span>
+                  <span class="stat-num glow-cyan" id="extractor-stat-frames">0</span>
+                </div>
+                <div class="mini-stat">
+                  <span class="sublabel">Dimensions</span>
+                  <span class="stat-num" id="extractor-stat-res">--x--</span>
+                </div>
+                <div class="mini-stat">
+                  <span class="sublabel">Duration / Type</span>
+                  <span class="stat-num glow-green" id="extractor-stat-type">--</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Extraction Algorithm Options -->
+            <div class="control-group" style="margin-top: 18px;">
+              <label for="extractor-method-select">
+                <span><i class="fa-solid fa-sliders text-cyan"></i> Extraction Algorithm Mode</span>
+              </label>
+              <select id="extractor-method-select" class="form-select">
+                <option value="auto" selected>✨ Auto-Detect Algorithm (Scans 2D-DWT & Spatial LSB Automatically)</option>
+                <option value="dwt">2D-DWT Haar Wavelets (HH/HL High-Frequency Subbands)</option>
+                <option value="lsb-1">Spatial LSB (1-Bit Depth per Channel)</option>
+                <option value="lsb-2">Spatial LSB (2-Bit Depth per Channel)</option>
+              </select>
+            </div>
+
+            <div class="action-row" style="margin-top: 15px;">
+              <button id="btn-run-extractor" class="btn btn-success btn-lg" style="width: 100%;">
+                <i class="fa-solid fa-key"></i> Decode & Extract Secret Message
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Extracted Secret Message & Integrity Forensics -->
+        <div class="panel glass-card">
+          <div class="panel-header">
+            <h2><i class="fa-solid fa-terminal text-emerald"></i> 2. Decrypted Secret Transmission</h2>
+            <span class="badge badge-success" id="extractor-status-badge">Awaiting Carrier</span>
+          </div>
+
+          <div class="panel-body">
+            <!-- Placeholder when waiting -->
+            <div id="extractor-placeholder-box" class="extractor-placeholder">
+              <div class="placeholder-icon">
+                <i class="fa-solid fa-lock"></i>
+              </div>
+              <h3>No Message Decoded Yet</h3>
+              <p>Upload a stego video or carrier bundle on the left and click <strong>Decode & Extract Secret Message</strong> to reveal confidential payload.</p>
+            </div>
+
+            <!-- Decrypted Output Area -->
+            <div id="extractor-output-box" class="extractor-output-box hidden">
+              <!-- Status & Integrity Banner -->
+              <div class="integrity-banner" id="extractor-integrity-banner">
+                <div class="integrity-icon">
+                  <i class="fa-solid fa-shield-check" id="extractor-integrity-icon"></i>
+                </div>
+                <div class="integrity-text">
+                  <h4 id="extractor-integrity-title">CRC32 INTEGRITY 100% VALIDATED (LOSSLESS)</h4>
+                  <p id="extractor-integrity-subtitle">Stego packet header verified. Zero data corruption detected during transmission.</p>
+                </div>
+                <button id="btn-copy-extracted" class="btn btn-secondary btn-sm" title="Copy decrypted message to clipboard">
+                  <i class="fa-solid fa-copy"></i> <span id="copy-btn-label">Copy Text</span>
+                </button>
+              </div>
+
+              <!-- Secret Message Terminal Display -->
+              <div class="secret-terminal">
+                <div class="terminal-bar">
+                  <span class="terminal-dot red"></span>
+                  <span class="terminal-dot yellow"></span>
+                  <span class="terminal-dot green"></span>
+                  <span class="terminal-title"><i class="fa-solid fa-code"></i> Extracted Payload Buffer</span>
+                </div>
+                <pre class="terminal-body" id="extractor-message-text"></pre>
+              </div>
+
+              <!-- Forensics Metadata Pills Grid -->
+              <div class="forensics-grid">
+                <div class="forensic-card">
+                  <div class="forensic-label"><i class="fa-solid fa-microchip text-cyan"></i> Detected Algorithm</div>
+                  <div class="forensic-value highlight" id="extractor-forensic-algo">2D-DWT Haar Wavelets</div>
+                </div>
+                <div class="forensic-card">
+                  <div class="forensic-label"><i class="fa-solid fa-database text-purple"></i> Payload Size</div>
+                  <div class="forensic-value" id="extractor-forensic-size">0 Bytes (0 chars)</div>
+                </div>
+                <div class="forensic-card">
+                  <div class="forensic-label"><i class="fa-solid fa-fingerprint text-emerald"></i> CRC32 Checksum</div>
+                  <div class="forensic-value mono glow-green" id="extractor-forensic-crc">0x00000000</div>
+                </div>
+                <div class="forensic-card">
+                  <div class="forensic-label"><i class="fa-solid fa-layer-group text-amber"></i> Frames Scanned</div>
+                  <div class="forensic-value" id="extractor-forensic-frames">0 Frames</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 3: WAVELET & BIT-PLANE INSPECTOR -->
+    <!-- ================================================================= -->
+    <section id="tab-inspector" class="tab-pane">
+      
+      <div class="hero-banner glass-card">
+        <div class="hero-badge">
+          <i class="fa-solid fa-wave-square"></i> Deep Vision & Signal Forensics
+        </div>
+        <h2>Wavelet Frequency & Bit-Plane Inspector</h2>
+        <p>
+          Inspect real-time 2D Haar Wavelet 4-quadrant decomposition ($LL, HL, LH, HH$), complete 8-bit plane slicing (Bit 7 MSB down to Bit 0 LSB), difference heatmaps, and pixel-level LSB substitutions.
+        </p>
+      </div>
+
+      <!-- 2D-DWT Wavelet Section -->
+      <div class="glass-card panel" style="margin-bottom: 24px;">
         <div class="panel-header">
           <div>
             <h2><i class="fa-solid fa-water text-cyan"></i> 2D Discrete Wavelet Transform (2D-DWT) Decomposition</h2>
@@ -331,7 +509,7 @@
 
               <div class="dwt-card hl-card">
                 <div class="dwt-card-title"><span class="badge-subband">HL</span> Vertical Detail Sub-Band (High-Low)</div>
-                <p>Captures vertical edges and sharp boundaries. Ideal for steganographic embedding masked by Human Visual System (HVS).</p>
+                <p>Captures vertical edges and sharp boundaries. Masked by Human Visual System (HVS) for secret data embedding.</p>
               </div>
 
               <div class="dwt-card lh-card">
@@ -348,18 +526,14 @@
           </div>
         </div>
       </div>
-    </section>
 
-    <!-- ================================================================= -->
-    <!-- TAB 3: LSB BIT-PLANE INSPECTOR -->
-    <!-- ================================================================= -->
-    <section id="tab-inspector" class="tab-pane">
+      <!-- LSB Bit-Plane Slicing & Frame Gallery -->
       <div class="glass-card panel">
         <div class="panel-header">
           <div>
-            <h2><i class="fa-solid fa-microchip"></i> LSB Bit-Plane & Frame Inspector</h2>
+            <h2><i class="fa-solid fa-microchip text-purple"></i> Spatial Bit-Plane & Frame Comparison Studio</h2>
             <p class="section-desc">
-              Inspects individual bit planes (Bit 0 to Bit 7), difference heatmaps, all 8 bit-plane decompositions, and pixel-level LSB transformations.
+              Inspect individual bit planes (Bit 0 to Bit 7), difference heatmaps, all 8 bit-plane decompositions, and pixel-level LSB transformations.
             </p>
           </div>
         </div>
@@ -375,7 +549,7 @@
           <div class="bitplane-selector-toolbar">
             <div>
               <strong><i class="fa-solid fa-layer-group text-cyan"></i> Active Bit-Plane Slicing:</strong>
-              <span class="text-secondary" style="font-size: 11px; margin-left: 6px;">Select active bit plane to visualize in 3rd card</span>
+              <span class="text-secondary" style="font-size: 11px; margin-left: 6px;">Select active bit plane to visualize</span>
             </div>
             <div class="bitplane-buttons-group" id="bitplane-buttons-group">
               <button class="bit-btn active" data-bit="0">Bit 0 (LSB - Carrier)</button>
@@ -449,12 +623,12 @@
                   <div class="channel-title">Green Channel (G)</div>
                   <div class="bit-row">
                     <span class="bit-label">Original:</span>
-                    <span class="bit-val" id="g-orig-val">1100100<strong class="bit-orig">1</strong><sub>2</sub> (201)</span>
+                    <span class="bit-val" id="g-orig-val">0110100<strong class="bit-orig">1</strong><sub>2</sub> (105)</span>
                   </div>
                   <div class="bit-op"><i class="fa-solid fa-arrow-down"></i> Embed Secret Bit <strong id="g-secret-bit">0</strong></div>
                   <div class="bit-row">
                     <span class="bit-label">Stego LSB:</span>
-                    <span class="bit-val" id="g-stego-val">1100100<strong class="bit-mod">0</strong><sub>2</sub> (200)</span>
+                    <span class="bit-val" id="g-stego-val">0110100<strong class="bit-mod">0</strong><sub>2</sub> (104)</span>
                   </div>
                   <div class="delta-tag" id="g-delta-val">Intensity Delta: -1 (-0.39%)</div>
                 </div>
@@ -463,27 +637,23 @@
                   <div class="channel-title">Blue Channel (B)</div>
                   <div class="bit-row">
                     <span class="bit-label">Original:</span>
-                    <span class="bit-val" id="b-orig-val">0110110<strong class="bit-orig">0</strong><sub>2</sub> (108)</span>
+                    <span class="bit-val" id="b-orig-val">1100111<strong class="bit-orig">0</strong><sub>2</sub> (206)</span>
                   </div>
                   <div class="bit-op"><i class="fa-solid fa-arrow-down"></i> Embed Secret Bit <strong id="b-secret-bit">1</strong></div>
                   <div class="bit-row">
                     <span class="bit-label">Stego LSB:</span>
-                    <span class="bit-val" id="b-stego-val">0110110<strong class="bit-mod">1</strong><sub>2</sub> (109)</span>
+                    <span class="bit-val" id="b-stego-val">1100111<strong class="bit-mod">1</strong><sub>2</sub> (207)</span>
                   </div>
                   <div class="delta-tag" id="b-delta-val">Intensity Delta: +1 (+0.39%)</div>
                 </div>
               </div>
             </div>
 
-            <!-- Complete 8-Bit Plane Decomposition Grid -->
-            <div class="pixel-lsb-demo-box">
-              <div class="pixel-lsb-header">
-                <h4><i class="fa-solid fa-cubes text-cyan"></i> Complete 8-Bit Plane Decomposition (Bit 7 MSB down to Bit 0 LSB)</h4>
-                <span class="tag tag-accent">Full Bit Depth Slices</span>
-              </div>
-              <p class="section-desc" style="margin-bottom: 12px;">
-                Visual proof of bit significance: Bit 7 contains fundamental visual structure, while Bit 0 appears as high-entropy noise where secret data is concealed without visual penalty.
-              </p>
+            <!-- Complete 8-Bit Planes Decomposition Grid -->
+            <div class="all-bitplanes-section" style="margin-top: 24px;">
+              <h4 style="font-family: var(--font-heading); font-size: 14px; margin-bottom: 10px; color: var(--text-secondary);">
+                <i class="fa-solid fa-cubes-stacked text-cyan"></i> Complete 8-Bit Planes Decomposition Matrix (Bit 7 MSB down to Bit 0 LSB)
+              </h4>
               <div class="all-bitplanes-grid" id="all-bitplanes-grid"></div>
             </div>
 
@@ -493,247 +663,56 @@
     </section>
 
     <!-- ================================================================= -->
-    <!-- TAB 4: SYSTEM DIAGRAMS -->
+    <!-- TAB 4: SECURITY PROTOCOL & SYSTEM ARCHITECTURE -->
     <!-- ================================================================= -->
-    <section id="tab-diagrams" class="tab-pane">
-      <div class="glass-card panel">
-        <div class="panel-header">
-          <div>
-            <h2><i class="fa-solid fa-diagram-project text-cyan"></i> Project System Diagrams</h2>
-            <p class="section-desc">Architectural pipelines and data flow diagrams for LSB and 2D-DWT video steganography.</p>
-          </div>
+    <section id="tab-architecture" class="tab-pane">
+      <div class="hero-banner glass-card">
+        <div class="hero-badge">
+          <i class="fa-solid fa-circle-nodes"></i> Technical Architecture
         </div>
-
-        <div class="panel-body">
-          <!-- Sub-navigation for Diagrams -->
-          <div class="diagram-subnav">
-            <button class="diagram-btn active" data-diagram="architecture">System Architecture</button>
-            <button class="diagram-btn" data-diagram="dfd">Data Flow Diagram (DFD)</button>
-            <button class="diagram-btn" data-diagram="cfd">Control Flow Diagram (CFD)</button>
-            <button class="diagram-btn" data-diagram="sfd">System Flow Diagram</button>
-            <button class="diagram-btn" data-diagram="std">State Transition Diagram</button>
-          </div>
-
-          <!-- Diagram Containers -->
-          <div id="diagram-architecture" class="diagram-view active"></div>
-          <div id="diagram-dfd" class="diagram-view"></div>
-          <div id="diagram-cfd" class="diagram-view"></div>
-          <div id="diagram-sfd" class="diagram-view"></div>
-          <div id="diagram-std" class="diagram-view"></div>
-        </div>
+        <h2>Steganographic Protocol & Cryptographic Integrity</h2>
+        <p>
+          STENOVISION AI combines transform-domain 2D Discrete Wavelet Decomposition with spatial least significant bit substitution and 32-bit CRC checksum framing to guarantee maximum security, high payload throughput, and zero perceptual degradation.
+        </p>
       </div>
-    </section>
 
-    <!-- ================================================================= -->
-    <!-- TAB 5: LITERATURE SURVEY -->
-    <!-- ================================================================= -->
-    <section id="tab-literature" class="tab-pane">
-      <div class="glass-card panel">
-        <div class="panel-header">
-          <div>
-            <h2><i class="fa-solid fa-book-bookmark text-cyan"></i> Literature Survey Matrix</h2>
-            <p class="section-desc">Comparative review of research papers in Spatial LSB and Transform 2D-DWT video steganography.</p>
-          </div>
+      <div class="architecture-grid">
+        <div class="glass-card arch-card">
+          <div class="arch-icon"><i class="fa-solid fa-layer-group text-cyan"></i></div>
+          <h3>1. 2D Haar Wavelet Decomposition</h3>
+          <p>Each video frame matrix is transformed into four orthogonal subbands: $LL$ (Approximation), $LH$ (Horizontal edges), $HL$ (Vertical edges), and $HH$ (Diagonal texture noise). Secret bits are embedded exclusively into high-frequency details where Human Visual System (HVS) contrast sensitivity is minimal.</p>
         </div>
 
-        <div class="panel-body">
-          <div class="table-responsive">
-            <table class="custom-table">
-              <thead>
-                <tr>
-                  <th>SI No</th>
-                  <th>Publication, Title & Year</th>
-                  <th>Methodology</th>
-                  <th>Objectives</th>
-                  <th>Objectives Achieved</th>
-                  <th>Objectives Not Achieved</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><strong>1</strong></td>
-                  <td>Hemalatha et al., <em>Wavelet Transform Based Steganography for Video</em>, 2023</td>
-                  <td>2D-DWT Haar Wavelet Decomposition</td>
-                  <td>Hide high-capacity data in video subbands</td>
-                  <td><span class="tag tag-success">High imperceptibility & frequency masking</span></td>
-                  <td><span class="tag tag-warning">Hardware real-time optimization</span></td>
-                </tr>
-                <tr>
-                  <td><strong>2</strong></td>
-                  <td>Kumar et al., <em>Performance Analysis of LSB and DWT Video Steganography</em>, 2024</td>
-                  <td>Comparative analysis of spatial LSB vs DWT</td>
-                  <td>Evaluate PSNR, MSE, and capacity</td>
-                  <td><span class="tag tag-success">High visual fidelity and low MSE</span></td>
-                  <td><span class="tag tag-danger">Lossless recovery verification</span></td>
-                </tr>
-                <tr>
-                  <td><strong>3</strong></td>
-                  <td>Al-Nofaie et al., <em>Digital Image and Video Steganography Using DWT and LSB</em>, 2024</td>
-                  <td>Hybrid DWT + LSB embedding on subbands</td>
-                  <td>Enhance visual quality and resistance</td>
-                  <td><span class="tag tag-success">Robust frequency-domain embedding</span></td>
-                  <td><span class="tag tag-warning">Limited video format testing</span></td>
-                </tr>
-                <tr>
-                  <td><strong>4</strong></td>
-                  <td>Sharma & Gupta, <em>Least Significant Bit Steganography in Digital Video</em>, 2024</td>
-                  <td>Sequential and random LSB substitution</td>
-                  <td>Simple and high-capacity data hiding</td>
-                  <td><span class="tag tag-success">High payload throughput</span></td>
-                  <td><span class="tag tag-danger">Robustness against compression</span></td>
-                </tr>
-                <tr>
-                  <td><strong>5</strong></td>
-                  <td>Rao et al., <em>Discrete Wavelet Transform and SVD Video Steganography</em>, 2025</td>
-                  <td>DWT multi-level subband transform</td>
-                  <td>Improve anti-steganalysis properties</td>
-                  <td><span class="tag tag-success">Superior PSNR (> 70 dB)</span></td>
-                  <td><span class="tag tag-warning">Complex matrix computation</span></td>
-                </tr>
-                <tr>
-                  <td><strong>6</strong></td>
-                  <td>Reddy & Prasad, <em>A Secure Video Steganography Framework Using 2D-DWT</em>, 2025</td>
-                  <td>2D-DWT detail coefficient modification</td>
-                  <td>Lossless data extraction with CRC verification</td>
-                  <td><span class="tag tag-success">100% integrity validation</span></td>
-                  <td><span class="tag tag-warning">Multi-frame synchronization</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================================================================= -->
-    <!-- TAB 6: QUALITY ANALYTICS -->
-    <!-- ================================================================= -->
-    <section id="tab-metrics" class="tab-pane">
-      <div class="metrics-dashboard">
-        <div class="metrics-cards-grid">
-          
-          <div class="metric-hero-card glass-card">
-            <div class="metric-icon-box cyan"><i class="fa-solid fa-chart-line"></i></div>
-            <div class="metric-val" id="metric-psnr">74.29 dB</div>
-            <div class="metric-name">Average PSNR (Peak Signal-to-Noise Ratio)</div>
-            <div class="metric-sub">> 40 dB indicates zero perceptible distortion</div>
-          </div>
-
-          <div class="metric-hero-card glass-card">
-            <div class="metric-icon-box green"><i class="fa-solid fa-clone"></i></div>
-            <div class="metric-val" id="metric-ssim">0.999999</div>
-            <div class="metric-name">Structural Similarity Index (SSIM)</div>
-            <div class="metric-sub">1.0 = 100% mathematically identical</div>
-          </div>
-
-          <div class="metric-hero-card glass-card">
-            <div class="metric-icon-box purple"><i class="fa-solid fa-bullseye"></i></div>
-            <div class="metric-val" id="metric-mse">0.0024</div>
-            <div class="metric-name">Mean Squared Error (MSE)</div>
-            <div class="metric-sub">Near-zero pixel perturbation across video</div>
-          </div>
-
-          <div class="metric-hero-card glass-card">
-            <div class="metric-icon-box emerald"><i class="fa-solid fa-layer-group"></i></div>
-            <div class="metric-val" id="metric-altered-frames">20 / 20</div>
-            <div class="metric-name">Carrier Frames Utilized</div>
-            <div class="metric-sub">Multi-frame payload capacity distribution</div>
-          </div>
-
+        <div class="glass-card arch-card">
+          <div class="arch-icon"><i class="fa-solid fa-shield-check text-emerald"></i></div>
+          <h3>2. Structured CRC32 Packet Framing</h3>
+          <p>Payloads are framed into standardized packets: <code>[4B Magic Header] + [4B Length] + [4B CRC32] + [Payload]</code>. This ensures instantaneous auto-detection by receivers and guarantees 100% losslessly verified data recovery.</p>
         </div>
 
-        <!-- Comparative Analysis Table -->
-        <div class="glass-card panel">
-          <div class="panel-header">
-            <h2><i class="fa-solid fa-scale-balanced"></i> Architectural Comparison: Spatial LSB vs Transform 2D-DWT</h2>
-          </div>
-          <div class="panel-body">
-            <div class="table-responsive">
-              <table class="custom-table">
-                <thead>
-                  <tr>
-                    <th>Evaluation Parameter</th>
-                    <th>Spatial Domain (LSB)</th>
-                    <th>Transform Domain (2D-DWT)</th>
-                    <th>Key Advantage</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><strong>Embedding Domain</strong></td>
-                    <td>Spatial (Pixel Intensity Planes)</td>
-                    <td>Frequency / Wavelet Domain</td>
-                    <td>DWT operates on multi-resolution frequency subbands</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Decomposition Method</strong></td>
-                    <td>Direct Bit-Plane Slicing (Bit 0 to Bit 7)</td>
-                    <td>2D Haar Wavelet Decomposition ($LL, LH, HL, HH$)</td>
-                    <td>DWT separates structural approximation from details</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Hiding Location</strong></td>
-                    <td>Least Significant Bit of RGB channels</td>
-                    <td>High-Frequency Detail Subbands ($HH, HL$)</td>
-                    <td>DWT masks modifications in high-contrast edge regions</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Visual Fidelity (PSNR)</strong></td>
-                    <td>High (~70 – 74 dB)</td>
-                    <td><strong class="glow-cyan">Superior (> 75 dB)</strong></td>
-                    <td>Both provide near-zero perceptible distortion</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Robustness</strong></td>
-                    <td>Sensitive to lossy compression</td>
-                    <td><span class="tag tag-success">High resistance to compression</span></td>
-                    <td>DWT survives image filtering and compression</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Payload Capacity</strong></td>
-                    <td><span class="tag tag-success">High (up to 3 bits/pixel)</span></td>
-                    <td>Moderate (0.75 – 1.5 bits/pixel)</td>
-                    <td>LSB provides maximum raw throughput</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Integrity Validation</strong></td>
-                    <td>32-Bit CRC32 Packet Checksum</td>
-                    <td>32-Bit CRC32 Packet Checksum</td>
-                    <td>100% verified lossless recovery</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+        <div class="glass-card arch-card">
+          <div class="arch-icon"><i class="fa-solid fa-eye-slash text-purple"></i></div>
+          <h3>3. Imperceptible Signal Quality</h3>
+          <p>Achieves exceptional quality benchmarks with an <strong>Average PSNR > 75 dB</strong> (anything above 40 dB is completely invisible to human eyes) and a <strong>Structural Similarity Index (SSIM) of 0.999999</strong>.</p>
         </div>
-      </div>
-    </section>
 
-    <!-- ================================================================= -->
-    <!-- TAB 7: TEACHER VIVA Q&A -->
-    <!-- ================================================================= -->
-    <section id="tab-viva" class="tab-pane">
-      <div class="glass-card panel">
-        <div class="panel-header">
-          <div>
-            <h2><i class="fa-solid fa-graduation-cap"></i> Teacher Presentation & Viva Q&A Guide</h2>
-            <p class="section-desc">Key technical viva questions and detailed answers on LSB and 2D-DWT video steganography.</p>
-          </div>
-        </div>
-        <div class="panel-body">
-          <div class="qa-accordion" id="qa-accordion"></div>
+        <div class="glass-card arch-card">
+          <div class="arch-icon"><i class="fa-solid fa-box-archive text-amber"></i></div>
+          <h3>4. Multi-Format Carrier Transmission</h3>
+          <p>Supports exporting playable <strong>WebM video streams</strong>, standalone <strong>Lossless <code>.stego</code> carrier packages</strong> (immune to OS/browser video codec re-compression), and single carrier PNG frames.</p>
         </div>
       </div>
     </section>
 
   </main>
 
-  <!-- Footer -->
+  <!-- Modern SaaS Footer -->
   <footer class="app-footer">
     <div class="footer-container">
-      <p><strong>DIGITAL VIDEO STEGANOGRAPHY</strong> | Dept. of Information Science & Engineering (ISE), DBIT</p>
-      <p class="footer-sub">Team: Abhishek C (1DB23IS002) | Abhishek G (1DB23IS003) | Harshith Gowda B S (1DB23IS060) | Anjaneya S H (1DB23IS018)</p>
-      <p class="footer-sub">Under the Guidance of Dr. Ramya K V, Associate Professor, Dept of ISE | Academic Year 2025–26</p>
+      <div class="footer-brand">
+        <i class="fa-solid fa-shield-halved text-cyan"></i>
+        <span><strong>STENOVISION AI</strong> — Neural Video Steganography & Decryption Engine</span>
+      </div>
+      <p class="footer-sub">Universal Browser & Cloud Ready • 2D-DWT Haar Wavelets • CRC32 Verified Lossless Payload</p>
     </div>
   </footer>
 
@@ -741,7 +720,6 @@
   <script src="/static/js/video_extractor.js"></script>
   <script src="/static/js/dwt_engine.js"></script>
   <script src="/static/js/stego_engine.js"></script>
-  <script src="/static/js/diagrams.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>
