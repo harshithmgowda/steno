@@ -428,6 +428,74 @@ body {
   padding: 24px;
 }
 
+/* Video Ingestion & Upload Elements */
+.header-action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.upload-progress-box {
+  background: var(--bg-elevated);
+  border: 1px solid rgba(0, 242, 254, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin-bottom: 18px;
+  animation: fadeIn 0.3s ease;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00f2fe, #3b82f6);
+  border-radius: var(--radius-full);
+  transition: width 0.2s ease;
+  box-shadow: 0 0 10px #00f2fe;
+}
+
+.video-preview-wrapper {
+  background: #090d16;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  margin-bottom: 18px;
+  text-align: center;
+}
+
+#video-player-preview {
+  width: 100%;
+  max-height: 160px;
+  border-radius: 4px;
+  background: #000000;
+  outline: none;
+}
+
+.video-filename-tag {
+  font-size: 11px;
+  font-family: var(--font-code);
+  color: var(--primary-cyan);
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
 /* Video Info Box */
 .video-info-box {
   background: var(--bg-elevated);

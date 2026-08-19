@@ -50,8 +50,8 @@
         </div>
       </div>
 
-      <!-- Team Members Modal / Dropdown Trigger -->
-      <div class="team-capsule" id="team-capsule" title="Click to view Project Team">
+      <!-- Team Members Dropdown Trigger -->
+      <div class="team-capsule" id="team-capsule" title="Click to toggle Team Members">
         <div class="team-avatars">
           <span class="avatar-tag">AC</span>
           <span class="avatar-tag">AG</span>
@@ -129,13 +129,40 @@
         <!-- Left Panel: Controls & Video Ingestion -->
         <div class="panel glass-card">
           <div class="panel-header">
-            <h2><i class="fa-solid fa-sliders"></i> 1. Ingestion & AFS Parameters</h2>
-            <button id="btn-load-sample" class="btn btn-secondary btn-sm">
-              <i class="fa-solid fa-rotate"></i> Regenerate Video
-            </button>
+            <h2><i class="fa-solid fa-sliders"></i> 1. Video Ingestion & AFS Setup</h2>
+            <div class="header-action-buttons">
+              <!-- Hidden Video File Input -->
+              <input type="file" id="video-file-input" accept="video/mp4,video/webm,video/ogg,video/quicktime" style="display: none;">
+              
+              <button id="btn-upload-video" class="btn btn-primary btn-sm" title="Upload an MP4/WebM video file from your computer">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload Video
+              </button>
+              
+              <button id="btn-load-sample" class="btn btn-secondary btn-sm" title="Regenerate dynamic synthetic video sequence">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Sample Video
+              </button>
+            </div>
           </div>
 
           <div class="panel-body">
+            
+            <!-- Video Extraction Progress Indicator -->
+            <div id="video-upload-progress" class="upload-progress-box hidden">
+              <div class="progress-info">
+                <span id="upload-progress-text"><i class="fa-solid fa-spinner fa-spin"></i> Decoding video frames...</span>
+                <span id="upload-progress-pct" class="glow-cyan">0%</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div id="upload-progress-fill" class="progress-bar-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <!-- Custom Video Preview (if uploaded) -->
+            <div id="video-preview-wrapper" class="video-preview-wrapper hidden">
+              <video id="video-player-preview" controls playsinline></video>
+              <div class="video-filename-tag"><i class="fa-solid fa-file-video"></i> <span id="uploaded-video-name">custom_video.mp4</span></div>
+            </div>
+
             <!-- Video Stats Card -->
             <div class="video-info-box">
               <div class="info-row">
@@ -166,7 +193,7 @@
             <div class="control-group">
               <label for="select-strategy">
                 <span>Adaptive Frame Selection (AFS)</span>
-                <i class="fa-solid fa-circle-info info-icon" title="Method used to score frame complexity and isolate high-entropy carriers."></i>
+                <i class="fa-solid fa-circle-info info-icon" title="Strategy used to identify optimal high-complexity carrier frames."></i>
               </label>
               <select id="select-strategy" class="form-select">
                 <option value="hybrid" selected>Hybrid (Texture Variance + Entropy + Motion)</option>
@@ -653,6 +680,7 @@
   </footer>
 
   <!-- Scripts -->
+  <script src="/static/js/video_extractor.js"></script>
   <script src="/static/js/crypto_engine.js"></script>
   <script src="/static/js/dwt_engine.js"></script>
   <script src="/static/js/afs_engine.js"></script>

@@ -28,6 +28,15 @@ const DOM = {
   teamCapsule: document.getElementById('team-capsule'),
   teamDrawer: document.getElementById('team-drawer'),
   btnLoadSample: document.getElementById('btn-load-sample'),
+  btnUploadVideo: document.getElementById('btn-upload-video'),
+  videoFileInput: document.getElementById('video-file-input'),
+  videoUploadProgress: document.getElementById('video-upload-progress'),
+  uploadProgressText: document.getElementById('upload-progress-text'),
+  uploadProgressPct: document.getElementById('upload-progress-pct'),
+  uploadProgressFill: document.getElementById('upload-progress-fill'),
+  videoPreviewWrapper: document.getElementById('video-preview-wrapper'),
+  videoPlayerPreview: document.getElementById('video-player-preview'),
+  uploadedVideoName: document.getElementById('uploaded-video-name'),
   selectStrategy: document.getElementById('select-strategy'),
   rangeRatio: document.getElementById('range-ratio'),
   ratioDisplay: document.getElementById('ratio-display'),
@@ -166,10 +175,74 @@ function setupControls() {
     });
   });
 
-  // Regenerate video button
+  // Regenerate sample video button
   DOM.btnLoadSample.addEventListener('click', () => {
+    if (DOM.videoPreviewWrapper) DOM.videoPreviewWrapper.classList.add('hidden');
     initSyntheticVideo();
   });
+
+  // Upload Custom Video Button
+  if (DOM.btnUploadVideo && DOM.videoFileInput) {
+    DOM.btnUploadVideo.addEventListener('click', () => {
+      DOM.videoFileInput.click();
+    });
+
+    DOM.videoFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      try {
+        DOM.videoUploadProgress.classList.remove('hidden');
+        DOM.btnUploadVideo.disabled = true;
+        DOM.uploadProgressFill.style.width = '0%';
+        DOM.uploadProgressPct.textContent = '0%';
+        DOM.uploadProgressText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Loading ${file.name}...`;
+
+        const result = await VideoFrameExtractor.extractFrames(file, 24, (pct, statusText) => {
+          DOM.uploadProgressFill.style.width = `${pct}%`;
+          DOM.uploadProgressPct.textContent = `${pct}%`;
+          DOM.uploadProgressText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${statusText}`;
+        });
+
+        // Set extracted frames
+        AppState.frames = result.frames;
+        AppState.stegoFrames = [...result.frames];
+
+        // Update video preview player
+        if (DOM.videoPlayerPreview && DOM.videoPreviewWrapper) {
+          DOM.videoPlayerPreview.src = result.videoBlobUrl;
+          DOM.uploadedVideoName.textContent = `${file.name} (${result.width}x${result.height}, ${result.frames.length} frames extracted)`;
+          DOM.videoPreviewWrapper.classList.remove('hidden');
+        }
+
+        DOM.statTotalFrames.textContent = result.frames.length;
+        DOM.statResolution.textContent = `${result.width}x${result.height}`;
+
+        // Populate DWT Dropdown
+        DOM.dwtFrameSelect.innerHTML = '';
+        for (let i = 0; i < result.frames.length; i++) {
+          const opt = document.createElement('option');
+          opt.value = i;
+          opt.textContent = `Frame #${i.toString().padStart(2, '0')}`;
+          DOM.dwtFrameSelect.appendChild(opt);
+        }
+
+        recalculateAFS();
+
+        setTimeout(() => {
+          DOM.videoUploadProgress.classList.add('hidden');
+        }, 800);
+
+      } catch (err) {
+        console.error('Video extraction error:', err);
+        alert(`Failed to load video: ${err.message}`);
+        DOM.videoUploadProgress.classList.add('hidden');
+      } finally {
+        DOM.btnUploadVideo.disabled = false;
+        DOM.videoFileInput.value = '';
+      }
+    });
+  }
 
   // DWT Frame Selector dropdown
   DOM.dwtFrameSelect.addEventListener('change', (e) => {
