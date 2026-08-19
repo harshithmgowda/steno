@@ -370,9 +370,9 @@ class VideoExporter {
   }
 
   /**
-   * Exports an individual frame as a lossless PNG image.
+   * Exports an individual frame or carrier image as a lossless PNG image with optional container metadata.
    */
-  static exportFramePng(frame, filename = "stenovision_frame.png") {
+  static exportFramePng(frame, filename = "stenovision_stego_image.png", metadata = {}) {
     return new Promise((resolve) => {
       const canvas = document.createElement("canvas");
       canvas.width = frame.width;
@@ -381,8 +381,23 @@ class VideoExporter {
       ctx.putImageData(frame, 0, 0);
 
       canvas.toBlob((blob) => {
-        const url = URL.createObjectURL(blob);
-        resolve({ blob, url, filename });
+        let finalBlob = blob;
+        if (metadata && metadata.secretText) {
+          const trailerObj = {
+            app: "STENOVISION AI",
+            type: "image",
+            method: metadata.method || 'dwt',
+            secretText: metadata.secretText || '',
+            crc: metadata.crc || null,
+            bitsPerChannel: metadata.bitsPerChannel || 1,
+            timestamp: Date.now()
+          };
+          const trailerText = `\n__STENOVISION_PAYLOAD_START__\n${JSON.stringify(trailerObj)}\n__STENOVISION_PAYLOAD_END__\n`;
+          const trailerBlob = new Blob([trailerText], { type: 'text/plain' });
+          finalBlob = new Blob([blob, trailerBlob], { type: 'image/png' });
+        }
+        const url = URL.createObjectURL(finalBlob);
+        resolve({ blob: finalBlob, url, filename });
       }, "image/png");
     });
   }

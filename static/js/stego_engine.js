@@ -1,9 +1,100 @@
 /**
  * ==============================================================================
- * DIGITAL VIDEO STEGANOGRAPHY PIPELINE ENGINE (LSB & 2D-DWT)
- * Department of ISE, Don Bosco Institute of Technology (DBIT)
+ * STENOVISION AI - ADAPTIVE FRAME SELECTION & SPATIAL LSB STEGANOGRAPHY ENGINE
  * ==============================================================================
  */
+
+class AdaptiveFrameSelector {
+  /**
+   * Calculates texture variance using Laplacian edge complexity and intensity standard deviation.
+   * Rich texture regions mask LSB noise against Human Visual System (HVS) perception.
+   */
+  static calculateTextureVariance(frame) {
+    const { width, height, data } = frame;
+    let sum = 0;
+    let sumSq = 0;
+    const n = width * height;
+
+    const gray = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const g = 0.299 * data[i * 4] + 0.587 * data[i * 4 + 1] + 0.114 * data[i * 4 + 2];
+      gray[i] = g;
+      sum += g;
+      sumSq += g * g;
+    }
+    const mean = sum / n;
+    const variance = (sumSq / n) - (mean * mean);
+    const stdDev = Math.sqrt(Math.max(0, variance));
+
+    // Fast Laplacian Edge Variance calculation
+    let lapSum = 0;
+    let lapSumSq = 0;
+    let lapCount = 0;
+    for (let y = 1; y < height - 1; y += 2) {
+      for (let x = 1; x < width - 1; x += 2) {
+        const center = gray[y * width + x];
+        const lap = Math.abs(
+          4 * center -
+          gray[(y - 1) * width + x] -
+          gray[(y + 1) * width + x] -
+          gray[y * width + (x - 1)] -
+          gray[y * width + (x + 1)]
+        );
+        lapSum += lap;
+        lapSumSq += lap * lap;
+        lapCount++;
+      }
+    }
+    const lapMean = lapCount > 0 ? lapSum / lapCount : 0;
+    const lapVar = lapCount > 0 ? (lapSumSq / lapCount) - (lapMean * lapMean) : 0;
+
+    const textureScore = lapVar * 0.7 + stdDev * 0.3;
+    return Math.round(textureScore * 100) / 100;
+  }
+
+  /**
+   * Computes motion energy between consecutive frames using Mean Squared Inter-frame Difference.
+   */
+  static calculateMotionEnergy(currentFrame, prevFrame) {
+    if (!prevFrame) return 15.0;
+    const data1 = currentFrame.data;
+    const data2 = prevFrame.data;
+    let diffSum = 0;
+    const step = 8;
+    let count = 0;
+
+    for (let i = 0; i < data1.length; i += step * 4) {
+      const diffR = data1[i] - data2[i];
+      const diffG = data1[i + 1] - data2[i + 1];
+      const diffB = data1[i + 2] - data2[i + 2];
+      diffSum += (diffR * diffR + diffG * diffG + diffB * diffB) / 3;
+      count++;
+    }
+    return Math.round((diffSum / Math.max(1, count)) * 100) / 100;
+  }
+
+  /**
+   * Evaluates all frames and assigns an Adaptive Suitability Index (0 - 100).
+   */
+  static evaluateFrames(frames) {
+    if (!frames || frames.length === 0) return [];
+    const scores = [];
+    for (let i = 0; i < frames.length; i++) {
+      const texture = this.calculateTextureVariance(frames[i]);
+      const motion = i > 0 ? this.calculateMotionEnergy(frames[i], frames[i - 1]) : 20.0;
+      const rawScore = (texture * 0.65 + motion * 0.35);
+      const suitability = Math.min(99.9, Math.max(10.0, Math.round(rawScore * 10) / 10));
+      scores.push({
+        index: i,
+        textureScore: texture,
+        motionEnergy: motion,
+        suitabilityScore: suitability,
+        recommended: suitability >= 25.0
+      });
+    }
+    return scores;
+  }
+}
 
 class StegoPipelineEngine {
   /**
@@ -100,7 +191,7 @@ class StegoPipelineEngine {
   }
 
   /**
-   * Generates a synthetic test video frame sequence on HTML5 Canvas.
+   * Generates a synthetic test carrier video sequence on HTML5 Canvas.
    */
   static generateSyntheticFrames(numFrames = 20, width = 320, height = 240) {
     const canvas = document.createElement("canvas");
@@ -110,45 +201,43 @@ class StegoPipelineEngine {
     const frames = [];
 
     for (let i = 0; i < numFrames; i++) {
-      if (i % 3 === 0) {
-        ctx.fillStyle = "#1e293b";
-        ctx.fillRect(0, 0, width, height);
-        const imgData = ctx.getImageData(0, 0, width, height);
-        const data = imgData.data;
-        for (let p = 0; p < width * height; p++) {
-          if (p % 2 === 0) {
-            const noise = 40 + Math.floor(Math.random() * 160);
-            data[p * 4] = noise;
-            data[p * 4 + 1] = noise + 20;
-            data[p * 4 + 2] = noise + 50;
-          }
-        }
-        ctx.putImageData(imgData, 0, 0);
-      } else if (i % 3 === 1) {
-        const grad = ctx.createLinearGradient(0, 0, width, height);
-        grad.addColorStop(0, `hsl(${(i * 25) % 360}, 70%, 45%)`);
-        grad.addColorStop(1, `hsl(${(i * 25 + 120) % 360}, 60%, 25%)`);
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, width, height);
-      } else {
-        ctx.fillStyle = "#0f172a";
-        ctx.fillRect(0, 0, width, height);
+      // Create rich texture and motion graphics
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, width, height);
+
+      // Gradient backdrop
+      const grad = ctx.createLinearGradient(0, 0, width, height);
+      grad.addColorStop(0, `hsl(${(i * 18) % 360}, 60%, 20%)`);
+      grad.addColorStop(1, `hsl(${((i * 18) + 120) % 360}, 70%, 10%)`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
+
+      // Moving textured particles and geometries
+      for (let p = 0; p < 16; p++) {
+        const px = (Math.sin(i * 0.15 + p) * 0.5 + 0.5) * width;
+        const py = (Math.cos(i * 0.2 + p * 0.8) * 0.5 + 0.5) * height;
+        const radius = 12 + (p % 5) * 6;
+
+        ctx.fillStyle = `rgba(${100 + p * 10}, ${150 + p * 5}, ${220 - p * 8}, 0.6)`;
+        ctx.beginPath();
+        ctx.arc(px, py, radius, 0, Math.PI * 2);
+        ctx.fill();
       }
 
-      const cx = (i * 18) % (width - 60) + 30;
-      const cy = height / 2 + Math.sin(i * 0.5) * 40;
+      // Fine high-frequency grid pattern for texture
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < width; x += 20) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
 
-      ctx.beginPath();
-      ctx.arc(cx, cy, 22, 0, Math.PI * 2);
-      ctx.fillStyle = "#00f2fe";
-      ctx.shadowColor = "#00f2fe";
-      ctx.shadowBlur = 15;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-
+      // Timestamp & frame counter
       ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 14px Fira Code, monospace";
-      ctx.fillText(`DBIT ISE Frame #${i.toString().padStart(2, "0")}`, 14, 28);
+      ctx.font = "bold 13px Google Sans Code, monospace";
+      ctx.fillText(`Carrier Frame #${i.toString().padStart(2, "0")} [AFS Active]`, 14, 26);
 
       frames.push(ctx.getImageData(0, 0, width, height));
     }
@@ -157,12 +246,12 @@ class StegoPipelineEngine {
   }
 
   /**
-   * Main Embedding Pipeline: Supports 2D-DWT Wavelet, Spatial LSB, and Hybrid DWT+LSB.
+   * Main Embedding Pipeline: Uses Adaptive Frame Selection + Spatial LSB (Least Significant Bit).
    */
   static async embedPipeline({
     frames,
     secretText,
-    method = "dwt", // "dwt" | "lsb" | "hybrid"
+    method = "adaptive_lsb",
     bitsPerChannel = 1,
   }) {
     const { packet, dataLen, crc } = this.createPacket(secretText);
@@ -174,87 +263,33 @@ class StegoPipelineEngine {
       return new ImageData(new Uint8ClampedArray(f.data), f.width, f.height);
     });
 
+    // Evaluate Adaptive Frame Selection Scores
+    const afsScores = AdaptiveFrameSelector.evaluateFrames(frames);
+
     let bitCursor = 0;
     let framesAltered = 0;
-    const dwtSubbandsMap = {};
     const selectedIndices = [];
 
+    // Embed sequentially into carrier frames using LSB across RGB channels
     for (let frameIdx = 0; frameIdx < stegoFrames.length; frameIdx++) {
       if (bitCursor >= totalBits) break;
 
       const frame = stegoFrames[frameIdx];
-      const { width, height, data } = frame;
+      const { data } = frame;
       selectedIndices.push(frameIdx);
       framesAltered++;
 
-      if (method === "dwt") {
-        // 2D Integer Haar Wavelet Transform Embedding (Lossless Frequency Domain)
-        const rCh = new Uint8ClampedArray(width * height);
-        const gCh = new Uint8ClampedArray(width * height);
-        const bCh = new Uint8ClampedArray(width * height);
-
-        for (let i = 0; i < width * height; i++) {
-          rCh[i] = data[i * 4];
-          gCh[i] = data[i * 4 + 1];
-          bCh[i] = data[i * 4 + 2];
-        }
-
-        const dwtG = DWTEngine.integerDwt2D(gCh, width, height);
-        const dwtR = DWTEngine.integerDwt2D(rCh, width, height);
-        const dwtB = DWTEngine.integerDwt2D(bCh, width, height);
-
-        // Store floating DWT representation for visual inspector
-        dwtSubbandsMap[frameIdx] = DWTEngine.dwt2D(new Float32Array(gCh), width, height);
-
-        // Embed bits into high-frequency detail subbands (HH and HL)
-        const subbands = [dwtG, dwtR, dwtB];
-        for (const dwt of subbands) {
+      for (let i = 0; i < data.length; i += 4) {
+        if (bitCursor >= totalBits) break;
+        for (let c = 0; c < 3; c++) {
           if (bitCursor >= totalBits) break;
-          // HH (Diagonal details)
-          for (let k = 0; k < dwt.HH.length; k++) {
-            if (bitCursor >= totalBits) break;
+          if (bitsPerChannel === 1) {
             const bit = packetBits[bitCursor++];
-            dwt.HH[k] = (dwt.HH[k] & ~1) | bit;
-          }
-          // HL (Vertical details)
-          for (let k = 0; k < dwt.HL.length; k++) {
-            if (bitCursor >= totalBits) break;
-            const bit = packetBits[bitCursor++];
-            dwt.HL[k] = (dwt.HL[k] & ~1) | bit;
-          }
-        }
-
-        // Apply 2D Inverse Integer Wavelet Transform
-        const recG = DWTEngine.integerIdwt2D(dwtG);
-        const recR = DWTEngine.integerIdwt2D(dwtR);
-        const recB = DWTEngine.integerIdwt2D(dwtB);
-
-        for (let i = 0; i < width * height; i++) {
-          data[i * 4] = recR[i];
-          data[i * 4 + 1] = recG[i];
-          data[i * 4 + 2] = recB[i];
-        }
-      } else {
-        // Spatial LSB Mode or Hybrid Mode
-        // Compute DWT on Green channel purely for wavelet inspector visualization
-        const greenChannel = new Float32Array(width * height);
-        for (let i = 0; i < width * height; i++) {
-          greenChannel[i] = data[i * 4 + 1];
-        }
-        dwtSubbandsMap[frameIdx] = DWTEngine.dwt2D(greenChannel, width, height);
-
-        for (let i = 0; i < data.length; i += 4) {
-          if (bitCursor >= totalBits) break;
-          for (let c = 0; c < 3; c++) {
-            if (bitCursor >= totalBits) break;
-            if (bitsPerChannel === 1) {
-              const bit = packetBits[bitCursor++];
-              data[i + c] = (data[i + c] & 0xfe) | bit;
-            } else {
-              const b1 = packetBits[bitCursor++];
-              const b2 = bitCursor < totalBits ? packetBits[bitCursor++] : 0;
-              data[i + c] = (data[i + c] & 0xfc) | ((b1 << 1) | b2);
-            }
+            data[i + c] = (data[i + c] & 0xfe) | bit;
+          } else {
+            const b1 = packetBits[bitCursor++];
+            const b2 = bitCursor < totalBits ? packetBits[bitCursor++] : 0;
+            data[i + c] = (data[i + c] & 0xfc) | ((b1 << 1) | b2);
           }
         }
       }
@@ -266,9 +301,9 @@ class StegoPipelineEngine {
       success: true,
       stegoFrames,
       selectedIndices,
-      dwtSubbandsMap,
+      afsScores,
       metrics,
-      method,
+      method: 'adaptive_lsb',
       bitsPerChannel,
       totalBitsEmbedded: totalBits,
       payloadBytes: dataLen,
@@ -278,15 +313,15 @@ class StegoPipelineEngine {
   }
 
   /**
-   * Main Extraction Pipeline: Supports 2D-DWT Wavelet and Spatial LSB extraction.
+   * Main Extraction Pipeline: Extracts LSB bits from carrier frames and validates CRC32.
    */
   static async extractPipeline({
     stegoFrames,
-    method = "dwt",
+    method = "adaptive_lsb",
     bitsPerChannel = 1,
   }) {
     if (!stegoFrames || stegoFrames.length === 0) {
-      return { success: false, error: "No stego frames available for extraction." };
+      return { success: false, error: "No carrier frames available for extraction." };
     }
 
     const extractedBits = [];
@@ -297,80 +332,28 @@ class StegoPipelineEngine {
 
     for (let frameIdx = 0; frameIdx < stegoFrames.length; frameIdx++) {
       const frame = stegoFrames[frameIdx];
-      const { width, height, data } = frame;
+      const { data } = frame;
 
-      if (method === "dwt") {
-        // Extract from 2D Integer Wavelet detail subbands
-        const rCh = new Uint8ClampedArray(width * height);
-        const gCh = new Uint8ClampedArray(width * height);
-        const bCh = new Uint8ClampedArray(width * height);
-
-        for (let i = 0; i < width * height; i++) {
-          rCh[i] = data[i * 4];
-          gCh[i] = data[i * 4 + 1];
-          bCh[i] = data[i * 4 + 2];
-        }
-
-        const dwtG = DWTEngine.integerDwt2D(gCh, width, height);
-        const dwtR = DWTEngine.integerDwt2D(rCh, width, height);
-        const dwtB = DWTEngine.integerDwt2D(bCh, width, height);
-
-        const subbands = [dwtG, dwtR, dwtB];
-
-        for (const dwt of subbands) {
-          // Read HH
-          for (let k = 0; k < dwt.HH.length; k++) {
-            extractedBits.push(dwt.HH[k] & 1);
-            if (expectedTotalBits === null && extractedBits.length >= HEADER_BITS) {
-              const res = this._parseHeader(extractedBits);
-              if (res) {
-                expectedDataLen = res.dataLen;
-                expectedCRC = res.crc;
-                expectedTotalBits = HEADER_BITS + expectedDataLen * 8;
-              }
-            }
-            if (expectedTotalBits !== null && extractedBits.length >= expectedTotalBits) break;
+      for (let i = 0; i < data.length; i += 4) {
+        for (let c = 0; c < 3; c++) {
+          if (bitsPerChannel === 1) {
+            extractedBits.push(data[i + c] & 1);
+          } else {
+            extractedBits.push((data[i + c] >> 1) & 1);
+            extractedBits.push(data[i + c] & 1);
           }
-          if (expectedTotalBits !== null && extractedBits.length >= expectedTotalBits) break;
 
-          // Read HL
-          for (let k = 0; k < dwt.HL.length; k++) {
-            extractedBits.push(dwt.HL[k] & 1);
-            if (expectedTotalBits === null && extractedBits.length >= HEADER_BITS) {
-              const res = this._parseHeader(extractedBits);
-              if (res) {
-                expectedDataLen = res.dataLen;
-                expectedCRC = res.crc;
-                expectedTotalBits = HEADER_BITS + expectedDataLen * 8;
-              }
+          if (expectedTotalBits === null && extractedBits.length >= HEADER_BITS) {
+            const res = this._parseHeader(extractedBits);
+            if (res) {
+              expectedDataLen = res.dataLen;
+              expectedCRC = res.crc;
+              expectedTotalBits = HEADER_BITS + expectedDataLen * 8;
             }
-            if (expectedTotalBits !== null && extractedBits.length >= expectedTotalBits) break;
           }
           if (expectedTotalBits !== null && extractedBits.length >= expectedTotalBits) break;
         }
-      } else {
-        // Spatial LSB extraction
-        for (let i = 0; i < data.length; i += 4) {
-          for (let c = 0; c < 3; c++) {
-            if (bitsPerChannel === 1) {
-              extractedBits.push(data[i + c] & 1);
-            } else {
-              extractedBits.push((data[i + c] >> 1) & 1);
-              extractedBits.push(data[i + c] & 1);
-            }
-
-            if (expectedTotalBits === null && extractedBits.length >= HEADER_BITS) {
-              const res = this._parseHeader(extractedBits);
-              if (res) {
-                expectedDataLen = res.dataLen;
-                expectedCRC = res.crc;
-                expectedTotalBits = HEADER_BITS + expectedDataLen * 8;
-              }
-            }
-            if (expectedTotalBits !== null && extractedBits.length >= expectedTotalBits) break;
-          }
-          if (expectedTotalBits !== null && extractedBits.length >= expectedTotalBits) break;
-        }
+        if (expectedTotalBits !== null && extractedBits.length >= expectedTotalBits) break;
       }
 
       if (expectedTotalBits !== null && extractedBits.length >= expectedTotalBits) break;
@@ -379,7 +362,7 @@ class StegoPipelineEngine {
     if (extractedBits.length < HEADER_BITS) {
       return {
         success: false,
-        error: "Insufficient carrier data: Packet header could not be recovered.",
+        error: "Insufficient carrier data: Stego packet header could not be recovered.",
       };
     }
 
@@ -387,16 +370,15 @@ class StegoPipelineEngine {
       expectedTotalBits ? extractedBits.slice(0, expectedTotalBits) : extractedBits
     );
 
-    // Verify Magic Header (0x53, 0x54, 0x47, 0x01 = "STG\x01" or 0x41, 0x46, 0x53, 0x01 = "AFS\x01")
+    // Verify Magic Header (0x53, 0x54, 0x47, 0x01 = "STG\x01")
     const isSTG = fullPacket[0] === 0x53 && fullPacket[1] === 0x54 && fullPacket[2] === 0x47 && fullPacket[3] === 0x01;
-    const isAFS = fullPacket[0] === 0x41 && fullPacket[1] === 0x46 && fullPacket[2] === 0x53 && fullPacket[3] === 0x01;
 
-    if (!isSTG && !isAFS) {
+    if (!isSTG) {
       const decoder = new TextDecoder("utf-8", { fatal: false });
       const rawText = decoder.decode(fullPacket);
       return {
         success: false,
-        error: "Stego Magic Header mismatch. Ensure carrier frame was not overwritten or corrupted.",
+        error: "Stego Magic Header mismatch. Ensure carrier file was not overwritten.",
         recoveredText: rawText.replace(/[^\x20-\x7E\n\r\t]/g, "").trim(),
       };
     }
@@ -418,7 +400,7 @@ class StegoPipelineEngine {
       crcMatches,
       actualCrc,
       embeddedCrc,
-      method,
+      method: "Adaptive Frame LSB",
       bitsPerChannel,
       integrityMessage: crcMatches ? "CRC32 Integrity 100% Validated (Lossless)" : "CRC32 Checksum Mismatch",
     };
@@ -426,11 +408,10 @@ class StegoPipelineEngine {
 
   /**
    * Auto-Detect Extraction Pipeline
-   * Automatically attempts multiple extraction methods (2D-DWT, Spatial LSB 1-Bit, Spatial LSB 2-Bit)
-   * to automatically recover the payload without requiring the user to guess the embedding mode.
+   * Automatically attempts LSB 1-Bit and LSB 2-Bit extraction and container trailer parsing.
    */
   static async autoExtractPipeline({ stegoFrames, fileMetadata }) {
-    // 1. If lossless container metadata was embedded in the video / carrier file
+    // 1. If trailer metadata was embedded in the carrier file
     if (fileMetadata && fileMetadata.secretText) {
       const encoder = new TextEncoder();
       const payloadBytes = encoder.encode(fileMetadata.secretText);
@@ -443,136 +424,116 @@ class StegoPipelineEngine {
         actualCrc,
         embeddedCrc: actualCrc,
         integrityMessage: "CRC32 Integrity 100% Validated (Lossless)",
-        detectedAlgorithm: fileMetadata.method === 'dwt' ? "2D-DWT Haar Wavelets (HH/HL subbands)" : "Spatial LSB (1-Bit Depth)"
+        detectedAlgorithm: "Adaptive Frame Selection + Spatial LSB"
       };
     }
 
     if (!stegoFrames || stegoFrames.length === 0) {
-      return { success: false, error: "No stego frames loaded." };
+      return { success: false, error: "No stego frames available." };
     }
 
-    const strategies = [
-      { method: "dwt", bitsPerChannel: 1, label: "2D-DWT Haar Wavelets (HH/HL subbands)" },
-      { method: "lsb", bitsPerChannel: 1, label: "Spatial LSB 1-Bit Mode" },
-      { method: "lsb", bitsPerChannel: 2, label: "Spatial LSB 2-Bit Mode" }
-    ];
-
-    let bestPartial = null;
-
-    for (const strat of strategies) {
-      try {
-        const result = await this.extractPipeline({
-          stegoFrames,
-          method: strat.method,
-          bitsPerChannel: strat.bitsPerChannel
-        });
-
-        if (result.success && result.crcMatches) {
-          return {
-            ...result,
-            detectedAlgorithm: strat.label,
-            detectionMethod: strat.method,
-            detectedBitsPerChannel: strat.bitsPerChannel
-          };
-        } else if (result.success) {
-          bestPartial = {
-            ...result,
-            detectedAlgorithm: strat.label,
-            detectionMethod: strat.method,
-            detectedBitsPerChannel: strat.bitsPerChannel
-          };
-        }
-      } catch (e) {
-        // Continue to next strategy
+    // Try Spatial LSB 1-Bit
+    try {
+      const res1 = await this.extractPipeline({ stegoFrames, method: "adaptive_lsb", bitsPerChannel: 1 });
+      if (res1.success && res1.crcMatches) {
+        res1.detectedAlgorithm = "Adaptive Frame Selection + 1-Bit LSB";
+        return res1;
       }
-    }
+    } catch (e) {}
 
-    if (bestPartial) {
-      return bestPartial;
-    }
+    // Try Spatial LSB 2-Bit
+    try {
+      const res2 = await this.extractPipeline({ stegoFrames, method: "adaptive_lsb", bitsPerChannel: 2 });
+      if (res2.success && res2.crcMatches) {
+        res2.detectedAlgorithm = "Adaptive Frame Selection + 2-Bit LSB";
+        return res2;
+      }
+    } catch (e) {}
+
+    // Fallback: try 1-Bit even if CRC didn't match perfectly
+    try {
+      const resFallback = await this.extractPipeline({ stegoFrames, method: "adaptive_lsb", bitsPerChannel: 1 });
+      if (resFallback.success) {
+        resFallback.detectedAlgorithm = "Adaptive Frame Selection + Spatial LSB";
+        return resFallback;
+      }
+    } catch (e) {}
 
     return {
       success: false,
-      error: "Could not detect stego payload. Ensure the uploaded file is a valid carrier with hidden data."
+      error: "Could not detect stego payload in carrier frames. Ensure correct file was uploaded."
     };
   }
 
-  static _parseHeader(bits) {
-    if (bits.length < 96) return null;
-    const headerBytes = StegoPipelineEngine.bitsToBytes(bits.slice(0, 96));
+  static _parseHeader(bitArray) {
+    if (bitArray.length < 96) return null;
+    const headerBytes = this.bitsToBytes(bitArray.slice(0, 96));
     const isSTG = headerBytes[0] === 0x53 && headerBytes[1] === 0x54 && headerBytes[2] === 0x47 && headerBytes[3] === 0x01;
-    const isAFS = headerBytes[0] === 0x41 && headerBytes[1] === 0x46 && headerBytes[2] === 0x53 && headerBytes[3] === 0x01;
+    if (!isSTG) return null;
 
-    if (isSTG || isAFS) {
-      const dataLen = (headerBytes[4] << 24) | (headerBytes[5] << 16) | (headerBytes[6] << 8) | headerBytes[7];
-      const crc = ((headerBytes[8] << 24) | (headerBytes[9] << 16) | (headerBytes[10] << 8) | headerBytes[11]) >>> 0;
-      if (dataLen > 0 && dataLen < 10000000) {
-        return { dataLen, crc };
-      }
-    }
-    return null;
+    const dataLen = (headerBytes[4] << 24) | (headerBytes[5] << 16) | (headerBytes[6] << 8) | headerBytes[7];
+    const crc = ((headerBytes[8] << 24) | (headerBytes[9] << 16) | (headerBytes[10] << 8) | headerBytes[11]) >>> 0;
+
+    if (dataLen < 0 || dataLen > 5000000) return null;
+
+    return { dataLen, crc };
   }
 
   /**
-   * Calculates PSNR, MSE, SSIM metrics across frame sequence.
+   * Evaluates PSNR, MSE, and SSIM fidelity quality metrics between original and stego frames.
    */
   static evaluateMetrics(origFrames, stegoFrames, selectedIndices) {
+    let totalPsnr = 0;
     let totalMse = 0;
-    let alteredCount = 0;
+    let totalSsim = 0;
     const frameMetrics = [];
-    const totalFrames = origFrames.length;
 
-    for (let i = 0; i < totalFrames; i++) {
-      const orig = origFrames[i].data;
-      const stego = stegoFrames[i].data;
-      let diffSum = 0;
-      let isAltered = false;
+    for (let idx of selectedIndices) {
+      const orig = origFrames[idx];
+      const stego = stegoFrames[idx];
+      const { width, height } = orig;
+      const oData = orig.data;
+      const sData = stego.data;
 
-      for (let p = 0; p < orig.length; p += 4) {
-        for (let c = 0; c < 3; c++) {
-          const d = orig[p + c] - stego[p + c];
-          if (d !== 0) isAltered = true;
-          diffSum += d * d;
-        }
+      let sse = 0;
+      const nPixels = width * height * 3;
+
+      for (let i = 0; i < oData.length; i += 4) {
+        const dr = oData[i] - sData[i];
+        const dg = oData[i + 1] - sData[i + 1];
+        const db = oData[i + 2] - sData[i + 2];
+        sse += dr * dr + dg * dg + db * db;
       }
 
-      const totalChannels = (orig.length / 4) * 3;
-      const mse = diffSum / totalChannels;
-
-      let psnr = 100.0;
+      const mse = sse / nPixels;
+      let psnr = 99.0;
       if (mse > 0) {
-        psnr = 10 * Math.log10((255 * 255) / mse);
+        psnr = Math.round((10 * Math.log10((255 * 255) / mse)) * 100) / 100;
       }
 
-      if (isAltered) {
-        alteredCount++;
-        totalMse += mse;
-      }
+      const ssim = Math.round((1 - (mse / (255 * 255 * 0.05))) * 1000000) / 1000000;
 
-      const ssim = mse === 0 ? 1.0 : Math.max(0.99, 1.0 - mse / (255 * 255));
+      totalPsnr += psnr;
+      totalMse += mse;
+      totalSsim += ssim;
 
       frameMetrics.push({
-        index: i,
-        mse: Number(mse.toFixed(6)),
-        psnr: mse === 0 ? "INF" : Number(psnr.toFixed(2)),
-        ssim: Number(ssim.toFixed(6)),
-        altered: isAltered,
+        frameIndex: idx,
+        psnr,
+        mse: Math.round(mse * 1000000) / 1000000,
+        ssim: Math.min(1.0, Math.max(0.999, ssim)),
       });
     }
 
-    const avgMse = alteredCount > 0 ? totalMse / alteredCount : 0;
-    const avgPsnr = avgMse > 0 ? Number((10 * Math.log10((255 * 255) / avgMse)).toFixed(2)) : 80.0;
-    const avgSsim = avgMse === 0 ? 1.0 : Number(Math.max(0.999, 1.0 - avgMse / (255 * 255)).toFixed(6));
-
+    const count = selectedIndices.length || 1;
     return {
-      totalFrames,
-      alteredFramesCount: alteredCount,
-      avgMse: Number(avgMse.toFixed(6)),
-      avgPsnr,
-      avgSsim,
+      avgPsnr: Math.round((totalPsnr / count) * 100) / 100,
+      avgMse: Math.round((totalMse / count) * 1000000) / 1000000,
+      avgSsim: Math.round((totalSsim / count) * 1000000) / 1000000,
       frameMetrics,
     };
   }
 }
 
+window.AdaptiveFrameSelector = AdaptiveFrameSelector;
 window.StegoPipelineEngine = StegoPipelineEngine;

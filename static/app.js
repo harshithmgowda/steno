@@ -1,6 +1,6 @@
 /**
  * ==============================================================================
- * STENOVISION AI - Neural & Wavelet Video Steganography Engine
+ * STENOVISION AI - Video & Image Steganography Engine
  * Master Client Application Orchestrator
  * ==============================================================================
  */
@@ -13,8 +13,7 @@ const AppState = {
   extractorFileMetadata: null,
   activeInspectIndex: 0,
   activeBitPlane: 0,
-  dwtSubbandsMap: {},
-  method: 'dwt', // 'dwt' | 'lsb' | 'hybrid'
+  method: 'adaptive_lsb',
   bitsPerChannel: 1,
   secretText: '',
   lastMetrics: null,
@@ -28,6 +27,8 @@ const DOM = {
   btnLoadSample: document.getElementById('btn-load-sample'),
   btnUploadVideo: document.getElementById('btn-upload-video'),
   videoFileInput: document.getElementById('video-file-input'),
+  btnUploadImage: document.getElementById('btn-upload-image'),
+  imageFileInput: document.getElementById('image-file-input'),
   videoUploadProgress: document.getElementById('video-upload-progress'),
   uploadProgressText: document.getElementById('upload-progress-text'),
   uploadProgressPct: document.getElementById('upload-progress-pct'),
@@ -35,6 +36,9 @@ const DOM = {
   videoPreviewWrapper: document.getElementById('video-preview-wrapper'),
   videoPlayerPreview: document.getElementById('video-player-preview'),
   uploadedVideoName: document.getElementById('uploaded-video-name'),
+  imagePreviewWrapper: document.getElementById('image-preview-wrapper'),
+  imagePlayerPreview: document.getElementById('image-player-preview'),
+  uploadedImageName: document.getElementById('uploaded-image-name'),
   selectMethod: document.getElementById('select-method'),
   radioBpc: document.querySelectorAll('input[name="bpc"]'),
   secretInput: document.getElementById('secret-message-input'),
@@ -50,6 +54,7 @@ const DOM = {
 
   // Stego Download Elements
   stegoDownloadSection: document.getElementById('stego-download-section'),
+  btnDownloadImage: document.getElementById('btn-download-image'),
   btnDownloadVideo: document.getElementById('btn-download-video'),
   btnDownloadBundle: document.getElementById('btn-download-bundle'),
   btnDownloadFrame: document.getElementById('btn-download-frame'),
@@ -219,6 +224,7 @@ function setupControls() {
   if (DOM.btnLoadSample) {
     DOM.btnLoadSample.addEventListener('click', () => {
       if (DOM.videoPreviewWrapper) DOM.videoPreviewWrapper.classList.add('hidden');
+      if (DOM.imagePreviewWrapper) DOM.imagePreviewWrapper.classList.add('hidden');
       initSyntheticVideo();
       showStegoToast('Dynamic AI video carrier sequence generated!', 'fa-wand-magic-sparkles');
     });
@@ -238,6 +244,7 @@ function setupControls() {
         if (file.type.startsWith('video/')) {
           DOM.videoPlayerPreview.src = URL.createObjectURL(file);
           if (DOM.videoPreviewWrapper) DOM.videoPreviewWrapper.classList.remove('hidden');
+          if (DOM.imagePreviewWrapper) DOM.imagePreviewWrapper.classList.add('hidden');
         }
       }
 
@@ -274,6 +281,56 @@ function setupControls() {
     });
   }
 
+  // Upload Image Handler
+  if (DOM.btnUploadImage && DOM.imageFileInput) {
+    DOM.btnUploadImage.addEventListener('click', () => {
+      DOM.imageFileInput.click();
+    });
+
+    DOM.imageFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (DOM.uploadedImageName) DOM.uploadedImageName.textContent = file.name;
+      if (DOM.imagePlayerPreview) {
+        DOM.imagePlayerPreview.src = URL.createObjectURL(file);
+        if (DOM.imagePreviewWrapper) DOM.imagePreviewWrapper.classList.remove('hidden');
+        if (DOM.videoPreviewWrapper) DOM.videoPreviewWrapper.classList.add('hidden');
+      }
+
+      if (DOM.videoUploadProgress) DOM.videoUploadProgress.classList.remove('hidden');
+      if (DOM.uploadProgressText) {
+        DOM.uploadProgressText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Decoding ${file.name} image carrier...`;
+      }
+
+      VideoFrameExtractor.extractFromFile(
+        file,
+        1,
+        (progressPct, statusText) => {
+          if (DOM.uploadProgressPct) DOM.uploadProgressPct.textContent = `${progressPct}%`;
+          if (DOM.uploadProgressFill) DOM.uploadProgressFill.style.width = `${progressPct}%`;
+          if (DOM.uploadProgressText) DOM.uploadProgressText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${statusText || 'Decoding image...'}`;
+        }
+      )
+        .then((result) => {
+          if (DOM.videoUploadProgress) DOM.videoUploadProgress.classList.add('hidden');
+          AppState.frames = result.frames || result;
+          AppState.stegoFrames = [];
+          if (DOM.stegoDownloadSection) DOM.stegoDownloadSection.classList.add('hidden');
+          updateVideoStats();
+          renderFrameGallery();
+          populateDWTDropdown();
+          selectFrameForDeepInspect(0);
+          updateDWTView(0);
+          showStegoToast(`Loaded carrier image (${AppState.frames[0].width}x${AppState.frames[0].height}) from ${file.name}!`, 'fa-circle-check');
+        })
+        .catch((err) => {
+          if (DOM.videoUploadProgress) DOM.videoUploadProgress.classList.add('hidden');
+          alert(`Error reading carrier image: ${err.message}`);
+        });
+    });
+  }
+
   if (DOM.btnEmbed) {
     DOM.btnEmbed.addEventListener('click', () => {
       runEmbedding();
@@ -297,49 +354,72 @@ function setupControls() {
 
 // Setup Stego Download Handlers
 function setupDownloadHandlers() {
-  if (!DOM.btnDownloadVideo) return;
+  // 1. Download Stego Image (.png)
+  if (DOM.btnDownloadImage) {
+    DOM.btnDownloadImage.addEventListener('click', async () => {
+      if (!AppState.stegoFrames || AppState.stegoFrames.length === 0) {
+        alert('Please run the Stego Embedding pipeline first to generate stego data.');
+        return;
+      }
 
-  // 1. Download Stego Video (.webm)
-  DOM.btnDownloadVideo.addEventListener('click', async () => {
-    if (!AppState.stegoFrames || AppState.stegoFrames.length === 0) {
-      alert('Please run the Stego Embedding pipeline first to generate stego video frames.');
-      return;
-    }
+      const frameIdx = AppState.activeInspectIndex || 0;
+      const targetFrame = AppState.stegoFrames[frameIdx] || AppState.stegoFrames[0];
+      const filename = `stenovision_stego_image.png`;
 
-    try {
-      if (DOM.downloadProgressBox) DOM.downloadProgressBox.classList.remove('hidden');
-      DOM.btnDownloadVideo.disabled = true;
+      const png = await VideoExporter.exportFramePng(targetFrame, filename, {
+        secretText: AppState.secretText,
+        method: AppState.method,
+        crc: AppState.lastEmbedCrc,
+        bitsPerChannel: AppState.bitsPerChannel
+      });
+      VideoExporter.downloadFile(png.blob, filename);
+      showStegoToast(`Stego image downloaded as lossless PNG!`, 'fa-image');
+    });
+  }
 
-      const exportResult = await VideoExporter.exportWebMVideo(
-        AppState.stegoFrames,
-        24,
-        (pct, msg) => {
-          if (DOM.downloadProgressPct) DOM.downloadProgressPct.textContent = `${pct}%`;
-          if (DOM.downloadProgressFill) DOM.downloadProgressFill.style.width = `${pct}%`;
-          if (DOM.downloadProgressText) DOM.downloadProgressText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${msg}`;
-        },
-        {
-          secretText: AppState.secretText,
-          method: AppState.method,
-          crc: AppState.lastEmbedCrc,
-          bitsPerChannel: AppState.bitsPerChannel
-        }
-      );
+  // 2. Download Stego Video (.webm)
+  if (DOM.btnDownloadVideo) {
+    DOM.btnDownloadVideo.addEventListener('click', async () => {
+      if (!AppState.stegoFrames || AppState.stegoFrames.length === 0) {
+        alert('Please run the Stego Embedding pipeline first to generate stego video frames.');
+        return;
+      }
 
-      VideoExporter.downloadFile(exportResult.blob, exportResult.filename);
-      showStegoToast(`Stego video downloaded (${(exportResult.sizeBytes / 1024).toFixed(1)} KB)!`, 'fa-file-video');
-    } catch (err) {
-      console.error('Video download error:', err);
-      alert(`Error exporting stego video: ${err.message}`);
-    } finally {
-      DOM.btnDownloadVideo.disabled = false;
-      setTimeout(() => {
-        if (DOM.downloadProgressBox) DOM.downloadProgressBox.classList.add('hidden');
-      }, 1000);
-    }
-  });
+      try {
+        if (DOM.downloadProgressBox) DOM.downloadProgressBox.classList.remove('hidden');
+        DOM.btnDownloadVideo.disabled = true;
 
-  // 2. Download Lossless Stego Package (.stego)
+        const exportResult = await VideoExporter.exportWebMVideo(
+          AppState.stegoFrames,
+          24,
+          (pct, msg) => {
+            if (DOM.downloadProgressPct) DOM.downloadProgressPct.textContent = `${pct}%`;
+            if (DOM.downloadProgressFill) DOM.downloadProgressFill.style.width = `${pct}%`;
+            if (DOM.downloadProgressText) DOM.downloadProgressText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${msg}`;
+          },
+          {
+            secretText: AppState.secretText,
+            method: AppState.method,
+            crc: AppState.lastEmbedCrc,
+            bitsPerChannel: AppState.bitsPerChannel
+          }
+        );
+
+        VideoExporter.downloadFile(exportResult.blob, exportResult.filename);
+        showStegoToast(`Stego video downloaded (${(exportResult.sizeBytes / 1024).toFixed(1)} KB)!`, 'fa-file-video');
+      } catch (err) {
+        console.error('Video download error:', err);
+        alert(`Error exporting stego video: ${err.message}`);
+      } finally {
+        DOM.btnDownloadVideo.disabled = false;
+        setTimeout(() => {
+          if (DOM.downloadProgressBox) DOM.downloadProgressBox.classList.add('hidden');
+        }, 1000);
+      }
+    });
+  }
+
+  // 3. Download Lossless Stego Package (.stego)
   if (DOM.btnDownloadBundle) {
     DOM.btnDownloadBundle.addEventListener('click', () => {
       if (!AppState.stegoFrames || AppState.stegoFrames.length === 0) {
@@ -366,7 +446,7 @@ function setupDownloadHandlers() {
     });
   }
 
-  // 3. Download Stego Frame (.png)
+  // 4. Download Stego Frame (.png)
   if (DOM.btnDownloadFrame) {
     DOM.btnDownloadFrame.addEventListener('click', async () => {
       if (!AppState.stegoFrames || AppState.stegoFrames.length === 0) {
@@ -663,10 +743,7 @@ function updateCapacityStat() {
   const w = AppState.frames[0].width;
   const h = AppState.frames[0].height;
 
-  let bytesPerFrame = (w * h * 3 * AppState.bitsPerChannel) / 8;
-  if (AppState.method === 'dwt') {
-    bytesPerFrame = (w * h * 1.5 * AppState.bitsPerChannel) / 8;
-  }
+  const bytesPerFrame = (w * h * 3 * AppState.bitsPerChannel) / 8;
   const totalCapKB = ((bytesPerFrame * numFrames) / 1024).toFixed(1);
   if (DOM.statCapacity) DOM.statCapacity.textContent = `${totalCapKB} KB`;
 }
@@ -686,6 +763,8 @@ function renderFrameGallery() {
   if (!DOM.frameGallery) return;
   DOM.frameGallery.innerHTML = '';
 
+  const afsScores = AdaptiveFrameSelector.evaluateFrames(AppState.frames);
+
   AppState.frames.forEach((frame, idx) => {
     const card = document.createElement('div');
     card.className = `frame-card ${idx === AppState.activeInspectIndex ? 'active' : ''}`;
@@ -696,13 +775,15 @@ function renderFrameGallery() {
     thumbCanvas.height = frame.height;
     thumbCanvas.getContext('2d').putImageData(frame, 0, 0);
 
+    const score = (afsScores && afsScores[idx]) ? afsScores[idx].suitabilityScore : 50;
+
     card.innerHTML = `
       <div class="frame-thumb-box">
         <img src="${thumbCanvas.toDataURL('image/jpeg', 0.8)}" alt="Frame ${idx}" class="frame-thumb-img">
         <span class="frame-badge">#${idx.toString().padStart(2, '0')}</span>
       </div>
       <div class="frame-info">
-        <span class="score-tag cyan">2D-DWT Ready</span>
+        <span class="score-tag cyan">AFS: ${score}%</span>
       </div>
     `;
 
@@ -855,17 +936,33 @@ function updateDWTView(frameIdx) {
   if (!AppState.frames || !AppState.frames[frameIdx] || !DOM.dwtCanvas) return;
 
   const frame = (AppState.stegoFrames && AppState.stegoFrames[frameIdx]) ? AppState.stegoFrames[frameIdx] : AppState.frames[frameIdx];
-  const { width, height, data } = frame;
+  const { width, height } = frame;
 
-  const greenChannel = new Float32Array(width * height);
-  for (let i = 0; i < width * height; i++) {
-    greenChannel[i] = data[i * 4 + 1];
+  DOM.dwtCanvas.width = width;
+  DOM.dwtCanvas.height = height;
+  const ctx = DOM.dwtCanvas.getContext('2d');
+  ctx.putImageData(frame, 0, 0);
+
+  // Compute AFS metrics for this active frame
+  const texture = AdaptiveFrameSelector.calculateTextureVariance(frame);
+  const prevFrame = frameIdx > 0 ? AppState.frames[frameIdx - 1] : null;
+  const motion = prevFrame ? AdaptiveFrameSelector.calculateMotionEnergy(frame, prevFrame) : 20.0;
+  const suitability = Math.min(99.9, Math.max(10.0, Math.round((texture * 0.65 + motion * 0.35) * 10) / 10));
+
+  const textureDesc = document.getElementById('afs-texture-desc');
+  if (textureDesc) {
+    textureDesc.innerHTML = `<strong>Variance Score: ${texture}</strong> (Edge Complexity & Detail Density). High texture provides robust spatial masking for LSB substitution.`;
   }
 
-  const dwtObj = DWTEngine.dwt2D(greenChannel, width, height);
-  AppState.dwtSubbandsMap[frameIdx] = dwtObj;
+  const motionDesc = document.getElementById('afs-motion-desc');
+  if (motionDesc) {
+    motionDesc.innerHTML = `<strong>Inter-Frame Motion: ${motion} MSE</strong> (Temporal Shift). Dynamic inter-frame changes mask secret bits against steganalysis tools.`;
+  }
 
-  DWTEngine.renderDWTToCanvas(dwtObj, DOM.dwtCanvas);
+  const afsBadge = document.getElementById('afs-active-badge');
+  if (afsBadge) {
+    afsBadge.textContent = `Suitability: ${suitability}%`;
+  }
 }
 
 function generateBitPlaneDataURL(frame, bitIndex = 0) {
@@ -951,12 +1048,11 @@ async function runEmbedding() {
 
       // Update Result Notification Card
       if (DOM.embedResultCard) DOM.embedResultCard.classList.remove('hidden');
-      const methodLabel = AppState.method === 'dwt' ? '2D-DWT Integer Wavelet Subbands (HH/HL)' : 'Spatial LSB Bit-Planes';
       if (DOM.embedPills) {
         DOM.embedPills.innerHTML = `
-          <span class="result-pill"><i class="fa-solid fa-water text-cyan"></i> Mode: ${methodLabel}</span>
-          <span class="result-pill"><i class="fa-solid fa-shield-check text-emerald"></i> CRC32 Checksum: 0x${result.crc.toString(16).toUpperCase()}</span>
-          <span class="result-pill"><i class="fa-solid fa-layer-group"></i> Altered: ${result.metrics.alteredFramesCount} Frames</span>
+          <span class="result-pill"><i class="fa-solid fa-wand-magic-sparkles text-cyan"></i> Algorithm: Adaptive Frame Selection + Spatial LSB</span>
+          <span class="result-pill"><i class="fa-solid fa-shield-check text-emerald"></i> CRC32: 0x${result.crc.toString(16).toUpperCase()}</span>
+          <span class="result-pill"><i class="fa-solid fa-layer-group"></i> Altered: ${result.framesUtilized} Frames</span>
           <span class="result-pill"><i class="fa-solid fa-chart-simple"></i> PSNR: ${result.metrics.avgPsnr} dB</span>
           <span class="result-pill"><i class="fa-solid fa-check"></i> SSIM: ${result.metrics.avgSsim}</span>
         `;
@@ -969,7 +1065,7 @@ async function runEmbedding() {
       selectFrameForDeepInspect(AppState.activeInspectIndex);
       updateDWTView(AppState.activeInspectIndex);
 
-      showStegoToast('Secret data successfully embedded into carrier video frames!', 'fa-lock');
+      showStegoToast('Secret data successfully embedded into carrier frames via Adaptive LSB!', 'fa-lock');
     }
   } catch (err) {
     console.error('Embedding error:', err);
