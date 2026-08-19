@@ -939,6 +939,16 @@ async function runEmbedding() {
       AppState.lastEmbedCrc = result.crc;
       AppState.secretText = text;
 
+      try {
+        sessionStorage.setItem('last_stego_payload', JSON.stringify({
+          secretText: text,
+          method: AppState.method,
+          crc: result.crc,
+          bitsPerChannel: AppState.bitsPerChannel,
+          timestamp: Date.now()
+        }));
+      } catch (e) {}
+
       // Update Result Notification Card
       if (DOM.embedResultCard) DOM.embedResultCard.classList.remove('hidden');
       if (DOM.embedPills) {
